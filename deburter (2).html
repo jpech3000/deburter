@@ -1,0 +1,4818 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Debuřtér">
+<title>DEBUŘTÉR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#161826;color:#e9e9ed;font-family:"Inter",system-ui,sans-serif}
+#root{min-height:100%}
+input,button,textarea,select{font-family:inherit}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useEffect } = React;
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+var SPRINT_TABLE = {
+  1: 4,
+  2: 5,
+  3: 6,
+  4: 7,
+  5: 8,
+  6: 9,
+  7: 10,
+  8: 11,
+  9: 10,
+  10: 11,
+  11: 12,
+  12: 11,
+  13: 12,
+  14: 13,
+  15: 12,
+  16: 13,
+  17: 14,
+  18: 13,
+  19: 14,
+  20: 15,
+  21: 14,
+  22: 15,
+  23: 16,
+  24: 15,
+  25: 16,
+  26: 17,
+  27: 16,
+  28: 17,
+  29: 18,
+  30: 17,
+  31: 18,
+  32: 19,
+  33: 18,
+  34: 19,
+  35: 20
+};
+var PROGRAM_START = "2026-09-07";
+var PROTEIN_GOAL = 160;
+var CATEGORIES = ["snídaně", "hlavní jídlo", "svačina", "potréninkové"];
+var VARIANT_LABELS = {
+  "?": {
+    label: "Čekám na trenéra",
+    color: "#888888"
+  },
+  lf: {
+    label: "Low Fat",
+    color: "#60a5fa"
+  },
+  lc: {
+    label: "Low Carb",
+    color: "#34d399"
+  },
+  bulk: {
+    label: "Bulk",
+    color: "#f5c400"
+  }
+};
+
+// ── DESIGN TOKENS (Nocturne + yellow accent) ──────────────────────────────────
+var C = {
+  bg: '#161826',
+  sf: '#232532',
+  tx: '#e9e9ed',
+  ac: '#d4a826',
+  ac1: '#2a2510',
+  ac2: '#3d3520',
+  ac6: '#b89020',
+  ac7: '#f0c840',
+  dv: 'rgba(233,233,237,0.16)',
+  mt: 'rgba(233,233,237,0.55)',
+  dm: 'rgba(233,233,237,0.3)',
+  ok: '#4ade80',
+  er: '#ff6b6b',
+  wa: '#f59e0b',
+  bl: '#60a5fa'
+};
+var F = '"Inter",system-ui,sans-serif';
+var inpS = {
+  width: '100%',
+  boxSizing: 'border-box',
+  background: C.bg,
+  border: '1px solid ' + C.dv,
+  color: C.tx,
+  padding: '10px 15px',
+  fontSize: 16,
+  fontFamily: F,
+  outline: 'none',
+  borderRadius: 8
+};
+
+// ── RECIPES ───────────────────────────────────────────────────────────────────
+var RECIPES = [{
+  id: "s1",
+  cat: "snídaně",
+  name: "Poke bowl s lososem",
+  flavor: "Asijský",
+  time: "15 min + 3h marinování",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Sushi rýže, marinovaný losos, edamame, okurka, sezam, sójová omáčka",
+  ingredients: [{
+    name: "losos (sashimi kvalita)",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "sushi rýže nebo jasmínová rýže",
+    qty: 150,
+    unit: "g",
+    skipLc: true
+  }, {
+    name: "edamame mražené",
+    qty: 50,
+    unit: "g"
+  }, {
+    name: "okurka salátová",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "sezamová semínka",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "sójová omáčka (bez cukru)",
+    qty: 3,
+    unit: "lžíce"
+  }, {
+    name: "rybí omáčka",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "limetka",
+    qty: 1,
+    unit: "ks"
+  }],
+  steps: ["MARINÁDA: Lososa nakrájej na kostičky 2×2 cm. Smíchej sójovou omáčku, rybí omáčku a šťávu z limetky. Lososa přidej, promíchej a dej do lednice aspoň na 30 minut.", "RÝŽE: Propláchni 3× studenou vodou. Vař 1:1,5 voda, 12 minut zakryté na středním plameni, pak 10 minut dojít bez odkrývání.", "EDAMAME: Vař 3 minuty v osolené vodě nebo 3 minuty v mikrovlnce.", "SESTAVENÍ: Rýže na dno, losos, edamame, okurka nakrájená na půlměsíčky. Posyp sezamem, zakápni zbytkem marinády."],
+  protip: "Čerstvost ryby je klíčová. Wasabi a pickled ginger jako bonus."
+}, {
+  id: "s2",
+  cat: "snídaně",
+  name: "Tvarohové lívanečky",
+  flavor: "Klasika",
+  time: "20 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Polotučný tvaroh, banán, vejce, ovesné vločky — bez mouky, bez cukru",
+  ingredients: [{
+    name: "polotučný tvaroh",
+    qty: 250,
+    unit: "g"
+  }, {
+    name: "zralý banán",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "vejce",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "ovesné vločky jemné",
+    qty: 40,
+    unit: "g"
+  }, {
+    name: "skořice",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "borůvky nebo maliny",
+    qty: 80,
+    unit: "g"
+  }],
+  steps: ["Banán rozmačkej vidličkou na talíři co nejdůkladněji.", "Smíchej s tvarohem, vejci, vločkami a skořicí na hustou hmotu.", "Pánev na střední teplotu, kapka oleje. Nakládej lžící (2 lžíce = 1 lívanec).", "Peč 3–4 minuty dokud okraje nezdrají a neobjeví se bublinky. Opatrně obrátit, 2–3 minuty z druhé strany.", "Podávej s borůvkami nebo malinami navrchu."],
+  protip: "Nespěchej s otáčením — mokré těsto se trhá. Čekej na bublinky."
+}, {
+  id: "s3",
+  cat: "snídaně",
+  name: "Míchaná vejce se špenátem",
+  flavor: "Klasika",
+  time: "10 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Vejce, čerstvý špenát, krůtí šunka, cherry rajčata, česnek",
+  ingredients: [{
+    name: "vejce",
+    qty: 3,
+    unit: "ks"
+  }, {
+    name: "špenát",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "krůtí šunka 90%+",
+    qty: 60,
+    unit: "g"
+  }, {
+    name: "cherry rajčata",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "česnek",
+    qty: 1,
+    unit: "stroužek"
+  }, {
+    name: "olivový olej",
+    qty: 1,
+    unit: "lžička"
+  }],
+  steps: ["Vejce rozklepni do misky, lehce promíchej vidličkou — ne do pěny.", "Pánev střední teplota, olivový olej. Česnek 30 vteřin.", "Špenát přidej, míchej 2 minuty do schoulení. Přidej rajčata nakrájená napůl.", "Vejce přilij. 20 vteřin klid, pak pomalu přetahuj špachtlí od okraje ke středu. Sundej z ohně dřív než jsou hotová — zbytkové teplo dodělá zbytek.", "Šunku natrhej na talíř až nakonec."],
+  protip: "Střední plamen + pomalé míchání = krémová vejce. Vysoký plamen = guma."
+}, {
+  id: "s4",
+  cat: "snídaně",
+  name: "Skyr s granolou a ovocem",
+  flavor: "Klasika",
+  time: "5 min (+ 15 min granola)",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Skyr nebo řecký jogurt 5%, domácí opečená granola, čerstvé ovoce",
+  ingredients: [{
+    name: "skyr nebo řecký jogurt 5%",
+    qty: 250,
+    unit: "g"
+  }, {
+    name: "ovesné vločky",
+    qty: 40,
+    unit: "g"
+  }, {
+    name: "mandle nebo kešu",
+    qty: 20,
+    unit: "g"
+  }, {
+    name: "skořice",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "borůvky nebo jahody",
+    qty: 80,
+    unit: "g"
+  }],
+  steps: ["GRANOLA (udělej na týden): Na suché pánvi vločky + ořechy, střední teplota. Míchej každých 30 vteřin, 5–7 minut do zlatova. Přidej skořici, vychladni. Vydrží týden v nádobě.", "Skyr do misky, granola navrch, ovoce navrch."],
+  protip: "Skyr má ~11g bílkovin na 100g. 250g = 27g bílkovin. Med je zakázaný — erythritol OK."
+}, {
+  id: "h1",
+  cat: "hlavní jídlo",
+  name: "Thajské kuřecí kari",
+  flavor: "Asijský",
+  time: "30 min",
+  servings: 4,
+  variants: {
+    lf: false,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Kuřecí stehna, kokosové mléko, červená kari pasta, paprika, cuketa",
+  ingredients: [{
+    name: "kuřecí stehna bez kůže",
+    qty: 600,
+    unit: "g"
+  }, {
+    name: "kokosové mléko plnotučné (plech)",
+    qty: 400,
+    unit: "ml"
+  }, {
+    name: "červená kari pasta (Maesri nebo Mae Ploy)",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "červená paprika",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "cuketa",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 3,
+    unit: "stroužky"
+  }, {
+    name: "rybí omáčka",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "limetka",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "rýže jasmínová",
+    qty: 200,
+    unit: "g",
+    skipLc: true
+  }],
+  steps: ["Kuřecí maso nakrájej na kostky 3×3 cm. Papriku na proužky, cuketu na půlměsíčky.", "Kari pastu dej do suchého woku nebo pánve na střední teplotu. Orestuj 1–2 minuty bez oleje — aktivuje se aroma.", "Přidej česnek, míchej 30 vteřin. Přilij celou plechovku kokosového mléka.", "Přidej rybí omáčku, přiveď k varu. Přidej kuřecí maso, sniž plamen, vař 10–12 minut.", "Zeleninu přidej posledních 5 minut. Squeezni limetku, přidej koriandr nebo bazalku."],
+  protip: "Kari pasta z asijského obchodu (Sapa Praha) je nesrovnatelně lepší než supermarket."
+}, {
+  id: "h2",
+  cat: "hlavní jídlo",
+  name: "Trhané vepřové z pomalého hrnce",
+  flavor: "Americký",
+  time: "6–8 h (pomalý hrnec)",
+  servings: 6,
+  variants: {
+    lf: false,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Vepřová krkovice, uzená paprika, kmín, zelí slaw, limetka",
+  ingredients: [{
+    name: "vepřová krkovice nebo plec",
+    qty: 1200,
+    unit: "g"
+  }, {
+    name: "uzená paprika",
+    qty: 3,
+    unit: "lžíce"
+  }, {
+    name: "kmín mletý",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "česnek sušený",
+    qty: 1,
+    unit: "lžíce"
+  }, {
+    name: "chilli prášek",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "sůl",
+    qty: 2,
+    unit: "lžičky"
+  }, {
+    name: "jablečný ocet",
+    qty: 50,
+    unit: "ml"
+  }, {
+    name: "bílé zelí",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "limetka",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "rýže nebo pohanka",
+    qty: 200,
+    unit: "g",
+    skipLc: true
+  }],
+  steps: ["Maso osuš, vetři koření (paprika, kmín, česnek, chilli, sůl) ze všech stran. Ideálně přes noc.", "Do pomalého hrnce nalijde ocet, vlož maso. LOW 8–10h nebo HIGH 5–6h. Neotvírej!", "Maso vytrhej dvěma vidličkami. Zalij 3–4 lžícemi výpeku.", "SLAW: Zelí nakrájej na tenké nudličky, přidej limetku + sůl, zmáčkni rukama 2–3 minuty. Nech 10 min."],
+  protip: "Krkovice > plec — víc tuku = šťavnatější. Skvělé i druhý den."
+}, {
+  id: "h3",
+  cat: "hlavní jídlo",
+  name: "Kuřecí souvlaki s tzatziki",
+  flavor: "Středomořský",
+  time: "20 min + 2h marinování",
+  servings: 3,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Marinované kuřecí kousky na špejlích, domácí tzatziki ze skyru",
+  ingredients: [{
+    name: "kuřecí prsa",
+    qty: 500,
+    unit: "g"
+  }, {
+    name: "olivový olej",
+    qty: 3,
+    unit: "lžíce"
+  }, {
+    name: "citron",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "oregano sušené",
+    qty: 2,
+    unit: "lžičky"
+  }, {
+    name: "česnek",
+    qty: 3,
+    unit: "stroužky"
+  }, {
+    name: "skyr nebo řecký jogurt 0%",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "okurka salátová",
+    qty: 0.5,
+    unit: "ks"
+  }, {
+    name: "kopr čerstvý",
+    qty: 1,
+    unit: "hrst"
+  }, {
+    name: "pita",
+    qty: 3,
+    unit: "ks",
+    skipLc: true
+  }],
+  steps: ["MARINÁDA: Kuřecí nakrájej na 3×3 cm. Smíchej oliváč + citron + česnek + oregano + sůl + pepř. Přidej maso, min 2h v lednici.", "TZATZIKI: Okurku nastrouhej, osol, vymačkej do utěrky pořádně. Smíchej se skyrem, koprem, česnekem, solí.", "Napícháj na špejle (dřevěné předem namočit 20 min). Pánev na vysokou teplotu, 5–6 min z každé strany.", "Kuřecí je hotové když vytéká čirá šťáva."],
+  protip: "Přes noc marinovat = výrazně šťavnatější. Tzatziki musí být hustá — klíč je pořádně vymačkat okurku."
+}, {
+  id: "h4",
+  cat: "hlavní jídlo",
+  name: "Losos s bylinkami a kapary",
+  flavor: "Středomořský",
+  time: "20 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Filet lososa, citron, kapary, bylinky, brokolice nebo batáty",
+  ingredients: [{
+    name: "filet lososa s kůží",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "citron",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 2,
+    unit: "stroužky"
+  }, {
+    name: "kapary",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "olivový olej",
+    qty: 1,
+    unit: "lžíce"
+  }, {
+    name: "tymián nebo rozmarýn",
+    qty: 3,
+    unit: "větvičky"
+  }, {
+    name: "brokolice",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "batáty",
+    qty: 200,
+    unit: "g",
+    skipLc: true
+  }],
+  steps: ["Troubu předehřej na 200°C. Batáty nakrájej, přidej do trouby 20 min před lososem.", "Lososa osuš, osolit, opepři. Potři směsí: oliváč + citronová kůra + česnek + bylinky.", "Peč 12–15 minut. Hotové když bělí a lehce se odlupuje — nepřepeč, zůstane mírně průsvitný uvnitř.", "Kapary přidej nastudeno přímo před podáváním."],
+  protip: "Kapary jsou tajná zbraň — slanost + kyselost bez přidávání soli."
+}, {
+  id: "h5",
+  cat: "hlavní jídlo",
+  name: "Kachní prsa s balsamico",
+  flavor: "Klasika",
+  time: "30 min",
+  servings: 2,
+  variants: {
+    lf: false,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Kachní prsa, špenát, česnek, balsamico redukce — technicky nejnáročnější recept",
+  ingredients: [{
+    name: "kachní prsa s kůží",
+    qty: 400,
+    unit: "g"
+  }, {
+    name: "čerstvý špenát",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "česnek",
+    qty: 2,
+    unit: "stroužky"
+  }, {
+    name: "balsamico ocet",
+    qty: 3,
+    unit: "lžíce"
+  }, {
+    name: "tymián čerstvý",
+    qty: 3,
+    unit: "větvičky"
+  }],
+  steps: ["Kachní vyndej 20 min předem. Kůži nařízni do mřížky každý 1 cm — jen kůži, NE do masa. Osolit, opepři.", "STUDENÁ PÁNEV (klíčové!): Polož kůží dolů na studenou, suchou pánev. Zapni na střední teplotu.", "Pomalu opékej 12–15 minut. Odlévej přebytečný tuk (schovej — skvělý na brambory). Kůže musí být zlatohnědá a křupavá.", "Obrátit, 4–5 minut z masité strany. Medium = lehce růžová uvnitř.", "ODPOČINEK: Na prkno, zakryj alobalem, 5 minut. Povinné!", "Špenát + česnek ve zbytku tuku. Balsamico do pánve 1 minutu na vysoké."],
+  protip: "Studená pánev + pomalé opékání = křupavá kůže. Horká pánev = tuk se nespaří ale ztvrdne."
+}, {
+  id: "h6",
+  cat: "hlavní jídlo",
+  name: "Tuňákový salát s vejci",
+  flavor: "Klasika",
+  time: "10 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Tuňák, vejce natvrdo, rukola, kapary, hořčičný vinaigrette",
+  ingredients: [{
+    name: "tuňák ve vlastní šťávě (plechovka)",
+    qty: 160,
+    unit: "g"
+  }, {
+    name: "vejce",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "rukola nebo baby špenát",
+    qty: 60,
+    unit: "g"
+  }, {
+    name: "cherry rajčata",
+    qty: 100,
+    unit: "g"
+  }, {
+    name: "kapary",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "dijonská hořčice",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "citron",
+    qty: 0.5,
+    unit: "ks"
+  }, {
+    name: "extra virgin olivový olej",
+    qty: 1,
+    unit: "lžíce"
+  }],
+  steps: ["VEJCE: Do studeného hrnce, zalij vodou. Vař, pak přesně 9 minut na středním plameni. Okamžitě do studené vody na 5 minut.", "DRESSING: Hořčice + citron + sůl + pepř, pak po troškách přilévej olej a míchej do emulze.", "Sestavení: rukola, tuňák scezený, rajčata napůl, vejce na čtvrtiny, kapary přímo z nálevu.", "Přelij dresinkem, lehce promíchej."],
+  protip: "Kapary = slanost bez soli. Neopláchávej je."
+}, {
+  id: "h7",
+  cat: "hlavní jídlo",
+  name: "Hovězí burger bowl",
+  flavor: "Americký",
+  time: "20 min",
+  servings: 2,
+  variants: {
+    lf: false,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Hovězí mleté 15%, mozzarella, dijonská hořčice, kapary, ledový salát",
+  ingredients: [{
+    name: "hovězí mleté 15% tuku",
+    qty: 400,
+    unit: "g"
+  }, {
+    name: "worcesterská omáčka",
+    qty: 1,
+    unit: "lžíce"
+  }, {
+    name: "mozzarella light",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "rajče",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "ledový salát",
+    qty: 100,
+    unit: "g"
+  }, {
+    name: "kapary",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "dijonská hořčice",
+    qty: 2,
+    unit: "lžičky"
+  }],
+  steps: ["Maso + worcester + sůl + pepř, promíchej jen do spojení. 2 burgery, silnější na okrajích.", "HORKÁ SUCHÁ PÁNEV. 3–4 min z každé strany, netlač! V poslední minutě sýr + přikrýt.", "Sundej, 2 min odpočívat.", "Bowl: salát → burger → rajče → kapary → hořčice."],
+  protip: "Burger bowl bez housky = méně sacharidů. Kapary + hořčice nahradí chybějící kyselost kečupu."
+}, {
+  id: "h8",
+  cat: "hlavní jídlo",
+  name: "Kuřecí játra na cibuli",
+  flavor: "Klasika",
+  time: "20 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Kuřecí játra, cibule, česnek, majoránka, rýže — levné, rychlé, bomba železa",
+  ingredients: [{
+    name: "kuřecí játra",
+    qty: 400,
+    unit: "g"
+  }, {
+    name: "cibule",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 3,
+    unit: "stroužky"
+  }, {
+    name: "majoránka sušená",
+    qty: 2,
+    unit: "lžičky"
+  }, {
+    name: "sójová omáčka",
+    qty: 1,
+    unit: "lžíce"
+  }, {
+    name: "olivový olej",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "rýže jasmínová",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "petrželka čerstvá",
+    qty: 1,
+    unit: "hrst"
+  }],
+  steps: ["Játra opláchni, osuš. Odstraň tuhé blány nebo žluté části. Nakrájej na 3–4 části.", "Cibuli na půlkroužky, restuj na kapce oleje 8–10 minut do zlatova. Přidej česnek 2 minuty.", "Přidej játra na vysoký plamen. 3–4 minuty z každé strany — uvnitř lehce růžová, NE krvavá, NE gumová.", "Přidej majoránku, sójovku, sůl, pepř. Posyp petrželkou."],
+  protip: "Játra = 26g bílkovin + železo na 100g. Přepečení = guma. Mírně růžová uvnitř = perfektní."
+}, {
+  id: "h9",
+  cat: "hlavní jídlo",
+  name: "Vepřová panenka s pohankovou kaší",
+  flavor: "Klasika",
+  time: "25 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Vepřová panenka — nejlibovější kus vepřového. Pohanka místo rýže.",
+  ingredients: [{
+    name: "vepřová panenka",
+    qty: 400,
+    unit: "g"
+  }, {
+    name: "pohanka",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "česnek",
+    qty: 3,
+    unit: "stroužky"
+  }, {
+    name: "tymián nebo rozmarýn",
+    qty: 3,
+    unit: "větvičky"
+  }, {
+    name: "hořčice dijonská",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "citron",
+    qty: 0.5,
+    unit: "ks"
+  }, {
+    name: "zelenina dle chuti",
+    qty: 200,
+    unit: "g"
+  }],
+  steps: ["MARINÁDA: Hořčice + citron + česnek + sůl + pepř. Potři maso, 15 minut.", "POHANKA: 1:2 voda, vař 15 min přikryté. 5 minut dojít.", "Pánev střední-vyšší, kapka oleje. Celou panenku opékej 10–12 minut — otáčej každé 2–3 minuty.", "ODPOČINEK: 5 minut pod alobalem. Pak nakrájej na medailonky."],
+  protip: "Vepřová panenka má méně tuku než kuřecí stehno — jediný kus vepřového plně OK pro low fat."
+}, {
+  id: "h10",
+  cat: "hlavní jídlo",
+  name: "Treska s batátovým pyré",
+  flavor: "Klasika",
+  time: "25 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Treska nebo candát, batátové pyré, brokolice — z manuálu",
+  ingredients: [{
+    name: "treska nebo candát (filet)",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "batáty",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "brokolice",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "citron",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 2,
+    unit: "stroužky"
+  }, {
+    name: "bylinky (petrželka, kopr)",
+    qty: 1,
+    unit: "hrst"
+  }, {
+    name: "olivový olej",
+    qty: 1,
+    unit: "lžička"
+  }],
+  steps: ["BATÁTY: Kostky 3 cm, vař 15–18 min. Scedíš, rozmačkej s kapkou oliváče, česnekem, solí.", "RYBA: Osuš, osolit, pokapat citronem. Na pánvi 3–4 minuty z každé strany. Hotové = bělí a odlupuje se na vrstvy.", "BROKOLICE: 4 minuty v osolené vodě nebo mikrovlnka 4 minuty.", "Bylinky nasekej na rybu těsně před podáváním."],
+  protip: "Treska = 40g bílkovin na 200g při minimu tuku. Mražené filety jsou OK — rozmraz přes noc."
+}, {
+  id: "h11",
+  cat: "hlavní jídlo",
+  name: "Brokolicové placky z vajíček",
+  flavor: "Klasika",
+  time: "25 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Brokolice, vejce, vařený brambor — z manuálu jako doporučené jídlo",
+  ingredients: [{
+    name: "brokolice",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "vejce celé",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "vaječné bílky",
+    qty: 3,
+    unit: "ks"
+  }, {
+    name: "vařený brambor nebo batát",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "česnek",
+    qty: 2,
+    unit: "stroužky"
+  }, {
+    name: "skyr nebo jogurt 0% jako dip",
+    qty: 100,
+    unit: "g"
+  }],
+  steps: ["Brokolici nasekej na drť nebo nastrouhej. Přidej sůl, 5 minut — pustí vodu. Vymačkej do utěrky!", "Studený brambor nastrouhej. Smíchej s brokolicí, vejcem, bílky, česnekem, solí.", "Pánev střední teplota, kapka oleje. 2 lžíce = 1 plaček. 3–4 minuty do zlatova, opatrně obrátit.", "Se skyrem jako dip. Pár kapek tabasco."],
+  protip: "Klíč = vymačkat vodu z brokolice. Mokré těsto = placky se rozpadají."
+}, {
+  id: "h12",
+  cat: "hlavní jídlo",
+  name: "Krůtí burger s houskou",
+  flavor: "Americký",
+  time: "20 min",
+  servings: 2,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Krůtí mleté, celozrnná houska, dijonská hořčice — z manuálu",
+  ingredients: [{
+    name: "krůtí nebo kuřecí mleté maso",
+    qty: 400,
+    unit: "g"
+  }, {
+    name: "celozrnná houska nebo kaiserka",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 2,
+    unit: "stroužky"
+  }, {
+    name: "worcesterská omáčka",
+    qty: 1,
+    unit: "lžíce"
+  }, {
+    name: "paprika sladká",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "rajče",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "ledový salát",
+    qty: 60,
+    unit: "g"
+  }, {
+    name: "dijonská hořčice",
+    qty: 2,
+    unit: "lžičky"
+  }, {
+    name: "řecký jogurt 0%",
+    qty: 2,
+    unit: "lžíce"
+  }],
+  steps: ["Maso + worcester + česnek + paprika + sůl + pepř. Jen do spojení. 2 burgery.", "Pánev střední-vyšší s kapkou oleje. 5 min z každé strany — krůtí musí být celé propečené.", "DRESINK: Jogurt 0% + hořčice + sůl.", "Houska napůl, dresink, salát, burger, rajče."],
+  protip: "Krůtí maso je suché — worcester a paprika pomáhají. Nepřepeč."
+}, {
+  id: "h13",
+  cat: "hlavní jídlo",
+  name: "Čočková polévka s kuřecím",
+  flavor: "Klasika",
+  time: "35 min",
+  servings: 4,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Červená čočka, kuřecí prsa, mrkev, kurkuma — sytá polévka pro celou rodinu",
+  ingredients: [{
+    name: "červená čočka",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "kuřecí prsa",
+    qty: 300,
+    unit: "g"
+  }, {
+    name: "mrkev",
+    qty: 2,
+    unit: "ks"
+  }, {
+    name: "cibule",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "česnek",
+    qty: 3,
+    unit: "stroužky"
+  }, {
+    name: "kurkuma",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "kmín mletý",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "uzená paprika",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "rajčatový protlak",
+    qty: 2,
+    unit: "lžíce"
+  }, {
+    name: "citron",
+    qty: 0.5,
+    unit: "ks"
+  }],
+  steps: ["Cibuli nadrobno, mrkev na kostičky. Na kapce oleje restuj cibuli 5 minut, přidej česnek + koření 1 minutu.", "Přidej čočku, mrkev, protlak. Zalij 1,2 l vody. Přiveď k varu, sniž.", "Kuřecí prsa celá do hrnce, vař 15 minut. Vytáhni, natrhej vidličkami, vrať zpět.", "Vař celkem 20–25 minut. Squeezni citron na konec."],
+  protip: "Polévka vydrží 4 dny. Červená čočka nevyžaduje namáčení."
+}, {
+  id: "v1",
+  cat: "svačina",
+  name: "Tvaroh se skořicí a ovocem",
+  flavor: "Klasika",
+  time: "3 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Odtučněný tvaroh, skořice, vanilka, čerstvé ovoce — žádné ořechy",
+  ingredients: [{
+    name: "odtučněný nebo nízkotučný tvaroh",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "skořice",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "vanilkový extrakt",
+    qty: 1,
+    unit: "kapka"
+  }, {
+    name: "maliny, borůvky nebo jahody",
+    qty: 80,
+    unit: "g"
+  }],
+  steps: ["Tvaroh + skořice + vanilka, promíchej. Ovoce navrch. Hotovo."],
+  protip: "Odtučněný tvaroh = 14g bílkovin na 100g. Med je zakázaný — erythritol OK."
+}, {
+  id: "v2",
+  cat: "svačina",
+  name: "Cottage s rajčetem a bazalkou",
+  flavor: "Středomořský",
+  time: "5 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Cottage light, zralé rajče, čerstvá bazalka, balsamico",
+  ingredients: [{
+    name: "cottage light",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "zralé rajče",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "čerstvá bazalka",
+    qty: 6,
+    unit: "lístků"
+  }, {
+    name: "balsamico ocet",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "extra virgin olivový olej",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "celozrnný knackebrot",
+    qty: 2,
+    unit: "ks",
+    skipLc: true
+  }],
+  steps: ["Cottage na talíř. Rajče nakrájej. Bazalku natrhej rukama (ne nožem).", "Zakápni balsamicem a oliváčem. Sůl, pepř."],
+  protip: "Balsamico musí být husté — crema di balsamico. Levné řídké je kyselé a nic moc."
+}, {
+  id: "v3",
+  cat: "svačina",
+  name: "Proteinový shake",
+  flavor: "Klasika",
+  time: "3 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Proteinový prášek, skyr, banán — potréninkový klasik",
+  ingredients: [{
+    name: "proteinový prášek whey",
+    qty: 30,
+    unit: "g"
+  }, {
+    name: "banán zralý",
+    qty: 1,
+    unit: "ks"
+  }, {
+    name: "skyr nebo řecký jogurt 0%",
+    qty: 100,
+    unit: "g"
+  }, {
+    name: "voda nebo polotučné mléko",
+    qty: 200,
+    unit: "ml"
+  }],
+  steps: ["Vše do shakeru nebo mixéru, 30 vteřin. Pro hustší smoothie méně tekutiny."],
+  protip: "Po tréninku: banán (rychlé cukry) + protein. Do hodiny po tréninku."
+}, {
+  id: "v4",
+  cat: "svačina",
+  name: "Skyr s ovocem",
+  flavor: "Klasika",
+  time: "2 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Skyr nebo řecký jogurt 0%, čerstvé nebo mražené ovoce, skořice",
+  ingredients: [{
+    name: "skyr nebo řecký jogurt 0%",
+    qty: 250,
+    unit: "g"
+  }, {
+    name: "borůvky nebo maliny nebo jahody",
+    qty: 100,
+    unit: "g"
+  }, {
+    name: "skořice",
+    qty: 1,
+    unit: "špetka"
+  }],
+  steps: ["Skyr do misky, ovoce, skořice. Hotovo."],
+  protip: "250g skyru = 27g bílkovin. Hlavní zbraň na 160g denního cíle."
+}, {
+  id: "v5",
+  cat: "svačina",
+  name: "Proteinový pudink s vločkami",
+  flavor: "Klasika",
+  time: "5 min + 2h chlazení",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Tvaroh 0%, proteinový prášek, vločky, skořice — připrav večer, ráno hotovo",
+  ingredients: [{
+    name: "odtučněný tvaroh",
+    qty: 200,
+    unit: "g"
+  }, {
+    name: "proteinový prášek",
+    qty: 25,
+    unit: "g"
+  }, {
+    name: "ovesné vločky jemné",
+    qty: 30,
+    unit: "g"
+  }, {
+    name: "kakao nesladké",
+    qty: 1,
+    unit: "lžička"
+  }, {
+    name: "skořice",
+    qty: 0.5,
+    unit: "lžičky"
+  }, {
+    name: "mléko nebo voda",
+    qty: 50,
+    unit: "ml"
+  }],
+  steps: ["Všechny ingredience promíchej do husté krémové konzistence.", "Zakryj a dej do lednice aspoň na 2 hodiny — ideálně přes noc."],
+  protip: "Připrav večer před spaním. Ráno máš 35g+ bílkovin bez práce."
+}, {
+  id: "v6",
+  cat: "svačina",
+  name: "Cottage s šunkou a zeleninou",
+  flavor: "Klasika",
+  time: "5 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: true,
+    bulk: true
+  },
+  postWorkout: false,
+  desc: "Cottage light, krůtí šunka 90%+, paprika nebo okurka — rychlá krabičková svačina",
+  ingredients: [{
+    name: "cottage light",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "krůtí nebo kuřecí šunka 90%+",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "paprika nebo okurka",
+    qty: 100,
+    unit: "g"
+  }, {
+    name: "cherry rajčata",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "celozrnný knackebrot",
+    qty: 2,
+    unit: "ks",
+    skipLc: true
+  }],
+  steps: ["Cottage do krabičky. Šunku natrhej. Zeleninu nakrájej.", "Knackebrot zabal zvlášť, přidej těsně před jídlem."],
+  protip: "Šunka musí mít 90%+ masa. Hledej Vysočinu nebo výrobky s min. ingrediencemi."
+}, {
+  id: "p1",
+  cat: "potréninkové",
+  name: "Poke bowl potréninkový",
+  flavor: "Asijský",
+  time: "10 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Tuňák, rýže, mango nebo banán — rychlé sacharidy + bílkoviny do hodiny",
+  ingredients: [{
+    name: "tuňák ve vlastní šťávě",
+    qty: 160,
+    unit: "g"
+  }, {
+    name: "sushi rýže (uvařená předem)",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "mango nebo banán nebo ananas",
+    qty: 80,
+    unit: "g"
+  }, {
+    name: "edamame mražené",
+    qty: 50,
+    unit: "g"
+  }, {
+    name: "sójová omáčka",
+    qty: 1,
+    unit: "lžíce"
+  }],
+  steps: ["Rýži uvař předem, vydrží 3 dny v lednici.", "Tuňáka scedit, mango nebo banán nakrájej, edamame 3 min mikrovlnka.", "Rýže → tuňák → ovoce → edamame. Sójovka, sezam."],
+  protip: "Po tréninku VYNECHEJ avokádo a tučné věci — zpomaluje vstřebávání."
+}, {
+  id: "p2",
+  cat: "potréninkové",
+  name: "Kuřecí prsa s rýží a jablkem",
+  flavor: "Klasika",
+  time: "15 min",
+  servings: 1,
+  variants: {
+    lf: true,
+    lc: false,
+    bulk: true
+  },
+  postWorkout: true,
+  desc: "Nejjednodušší meal prep — uvař jednou, jez 3 dny po trénincích",
+  ingredients: [{
+    name: "kuřecí prsa",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "rýže jasmínová (uvařená)",
+    qty: 150,
+    unit: "g"
+  }, {
+    name: "jablko nebo banán",
+    qty: 1,
+    unit: "ks"
+  }],
+  steps: ["Kuřecí osolte, opékej na pánvi 4–5 min z každé strany. Nakrájej, nasyp do krabičky.", "Rýži uvař na zásobu. Po tréninku: mikrovlnka 2 minuty. Přidej ovoce nastudeno."],
+  protip: "Žádný tuk sem nepřidávej — po tréninku chceš čisté bílkoviny + rychlé sacharidy."
+}];
+
+// ── SUPABASE STORAGE ──────────────────────────────────────────────────────────
+var SB_URL = 'https://infkvxltifdatugjudwt.supabase.co/rest/v1';
+var SB_KEY = 'sb_publishable_Zf2UBPHLnYe4ep2U2LTsVQ_5u8FxFJy';
+var SB_H = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Accept': 'application/json'
+};
+function sLoad(_x) {
+  return _sLoad.apply(this, arguments);
+}
+function _sLoad() {
+  _sLoad = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(k) {
+    var res, rows, v, _t2, _t3;
+    return _regenerator().w(function (_context4) {
+      while (1) switch (_context4.p = _context4.n) {
+        case 0:
+          _context4.p = 0;
+          _context4.n = 1;
+          return fetch("".concat(SB_URL, "/app_state?key=eq.").concat(encodeURIComponent(k), "&select=value"), {
+            headers: SB_H
+          });
+        case 1:
+          res = _context4.v;
+          if (res.ok) {
+            _context4.n = 2;
+            break;
+          }
+          throw new Error(res.status);
+        case 2:
+          _context4.n = 3;
+          return res.json();
+        case 3:
+          rows = _context4.v;
+          if (!(!rows || !rows.length)) {
+            _context4.n = 4;
+            break;
+          }
+          return _context4.a(2, null);
+        case 4:
+          return _context4.a(2, rows[0].value);
+        case 5:
+          _context4.p = 5;
+          _t2 = _context4.v;
+          _context4.p = 6;
+          v = localStorage.getItem(k);
+          return _context4.a(2, v ? JSON.parse(v) : null);
+        case 7:
+          _context4.p = 7;
+          _t3 = _context4.v;
+          return _context4.a(2, null);
+      }
+    }, _callee4, null, [[6, 7], [0, 5]]);
+  }));
+  return _sLoad.apply(this, arguments);
+}
+function sSave(_x2, _x3) {
+  return _sSave.apply(this, arguments);
+} // ── UI HELPERS ────────────────────────────────────────────────────────────────
+function _sSave() {
+  _sSave = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5(k, v) {
+    var _t4;
+    return _regenerator().w(function (_context5) {
+      while (1) switch (_context5.p = _context5.n) {
+        case 0:
+          _context5.p = 0;
+          _context5.n = 1;
+          return fetch("".concat(SB_URL, "/app_state"), {
+            method: 'POST',
+            headers: _objectSpread(_objectSpread({}, SB_H), {}, {
+              'Prefer': 'resolution=merge-duplicates,return=minimal'
+            }),
+            body: JSON.stringify({
+              key: k,
+              value: v
+            })
+          });
+        case 1:
+          _context5.n = 3;
+          break;
+        case 2:
+          _context5.p = 2;
+          _t4 = _context5.v;
+        case 3:
+          try {
+            if (v === null) localStorage.removeItem(k);else localStorage.setItem(k, JSON.stringify(v));
+          } catch (_) {}
+        case 4:
+          return _context5.a(2);
+      }
+    }, _callee5, null, [[0, 2]]);
+  }));
+  return _sSave.apply(this, arguments);
+}
+var lbl = function lbl(t) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: C.mt,
+      marginBottom: 8,
+      fontFamily: F
+    }
+  }, t);
+};
+var cd = function cd(children, s) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: _objectSpread({
+      background: C.sf,
+      padding: '14px 16px'
+    }, s || {})
+  }, children);
+};
+var empt = function empt(t) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      textAlign: 'center',
+      padding: '32px 16px',
+      fontSize: 14,
+      fontFamily: F
+    }
+  }, t);
+};
+function Btn(_ref) {
+  var children = _ref.children,
+    onClick = _ref.onClick,
+    ghost = _ref.ghost,
+    danger = _ref.danger,
+    sm = _ref.sm,
+    full = _ref.full,
+    dis = _ref.dis,
+    s = _ref.style;
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    disabled: dis,
+    style: _objectSpread({
+      background: ghost ? 'transparent' : danger ? C.er : 'transparent',
+      color: ghost ? C.ac : danger ? '#fff' : C.ac,
+      border: ghost ? '1px solid ' + C.ac : danger ? 'none' : '1px solid ' + C.ac,
+      padding: sm ? '7px 12px' : '11px 18px',
+      fontFamily: F,
+      fontWeight: 800,
+      fontSize: sm ? 12 : 14,
+      cursor: dis ? 'not-allowed' : 'pointer',
+      opacity: dis ? 0.5 : 1,
+      width: full ? '100%' : undefined
+    }, s || {})
+  }, children);
+}
+function Modal(_ref2) {
+  var children = _ref2.children,
+    onClose = _ref2.onClose;
+  return /*#__PURE__*/React.createElement("div", {
+    onClick: onClose,
+    style: {
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick(e) {
+      return e.stopPropagation();
+    },
+    style: {
+      background: C.bg,
+      border: '1px solid ' + C.dv,
+      borderRadius: 4,
+      padding: 24,
+      maxWidth: 340,
+      width: '100%'
+    }
+  }, children));
+}
+
+// ── MINI CALENDAR ─────────────────────────────────────────────────────────────
+function MiniCal(_ref3) {
+  var selected = _ref3.selected,
+    onSelect = _ref3.onSelect,
+    trainings = _ref3.trainings,
+    startCollapsed = _ref3.startCollapsed;
+  var _useState = useState(startCollapsed !== false),
+    _useState2 = _slicedToArray(_useState, 2),
+    col = _useState2[0],
+    setCol = _useState2[1];
+  var today = new Date().toISOString().slice(0, 10);
+  var sel = selected || today;
+  var _useState3 = useState(parseInt(sel.slice(0, 4))),
+    _useState4 = _slicedToArray(_useState3, 2),
+    vy = _useState4[0],
+    setVy = _useState4[1];
+  var _useState5 = useState(parseInt(sel.slice(5, 7)) - 1),
+    _useState6 = _slicedToArray(_useState5, 2),
+    vm = _useState6[0],
+    setVm = _useState6[1];
+  var dm = {};
+  Object.entries(trainings || {}).forEach(function (_ref4) {
+    var _ref5 = _slicedToArray(_ref4, 2),
+      k = _ref5[0],
+      v = _ref5[1];
+    var d = k.slice(0, 10);
+    if (!dm[d]) dm[d] = new Set();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k) && (v.exercises || []).length > 0) dm[d].add('s');
+    if (v.taskType === 'sprinty') dm[d].add('p');
+    if (v.taskType === 'zhustovani' || v.taskType === 'beh') dm[d].add('c');
+  });
+  var DOT = {
+    s: C.ac,
+    p: C.ok,
+    c: C.bl
+  };
+  var DAYS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
+  var mn = new Date(vy, vm, 1).toLocaleString('cs-CZ', {
+    month: 'long',
+    year: 'numeric'
+  });
+  var prev = function prev() {
+    return vm === 0 ? (setVm(11), setVy(function (y) {
+      return y - 1;
+    })) : setVm(function (m) {
+      return m - 1;
+    });
+  };
+  var next = function next() {
+    return vm === 11 ? (setVm(0), setVy(function (y) {
+      return y + 1;
+    })) : setVm(function (m) {
+      return m + 1;
+    });
+  };
+  var dots = function dots(ds) {
+    var d = dm[ds];
+    if (!d || d.size === 0) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 2,
+        marginTop: 2
+      }
+    }, ['s', 'p', 'c'].map(function (t) {
+      return d.has(t) ? /*#__PURE__*/React.createElement("div", {
+        key: t,
+        style: {
+          width: 4,
+          height: 4,
+          borderRadius: '50%',
+          background: DOT[t]
+        }
+      }) : null;
+    }));
+  };
+  var dayCell = function dayCell(ds) {
+    var day = parseInt(ds.slice(8));
+    var isSel = ds === selected,
+      isT = ds === today;
+    return /*#__PURE__*/React.createElement("div", {
+      key: ds,
+      onClick: function onClick() {
+        return onSelect(ds);
+      },
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '6px 2px',
+        cursor: 'pointer',
+        minHeight: 38,
+        background: isSel ? C.ac1 : 'transparent',
+        borderBottom: isSel ? '2px solid ' + C.ac : '2px solid transparent'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: isSel || isT ? 800 : 400,
+        color: isSel ? C.ac : isT ? C.tx : C.mt,
+        fontFamily: F
+      }
+    }, day), dots(ds));
+  };
+  if (col) {
+    var sd = new Date(sel),
+      dow = (sd.getDay() + 6) % 7,
+      ws = new Date(sd);
+    ws.setDate(ws.getDate() - dow);
+    var wd = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(ws);
+      d.setDate(d.getDate() + i);
+      wd.push(d.toISOString().slice(0, 10));
+    }
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: C.tx,
+        fontFamily: F,
+        textTransform: 'capitalize'
+      }
+    }, mn), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setCol(false);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.mt,
+        padding: '4px 10px',
+        fontSize: 11,
+        cursor: 'pointer',
+        fontFamily: F,
+        fontWeight: 600
+      }
+    }, "M\u011Bs\xEDc \u25BC")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7,1fr)',
+        gap: 2
+      }
+    }, DAYS.map(function (d) {
+      return /*#__PURE__*/React.createElement("div", {
+        key: d,
+        style: {
+          textAlign: 'center',
+          color: C.dm,
+          fontSize: 10,
+          fontWeight: 800,
+          fontFamily: F
+        }
+      }, d);
+    }), wd.map(dayCell)));
+  }
+  var fd = new Date(vy, vm, 1),
+    so = (fd.getDay() + 6) % 7,
+    dim2 = new Date(vy, vm + 1, 0).getDate();
+  var cells = [];
+  for (var _i = 0; _i < so; _i++) cells.push(null);
+  for (var _d = 1; _d <= dim2; _d++) cells.push("".concat(vy, "-").concat(String(vm + 1).padStart(2, '0'), "-").concat(String(_d).padStart(2, '0')));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: prev,
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      width: 32,
+      height: 32,
+      cursor: 'pointer',
+      fontSize: 16,
+      fontFamily: F
+    }
+  }, "\u2039"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800,
+      color: C.tx,
+      fontFamily: F,
+      textTransform: 'capitalize'
+    }
+  }, mn), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setCol(true);
+    },
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: '4px 10px',
+      fontSize: 11,
+      cursor: 'pointer',
+      fontFamily: F,
+      fontWeight: 600
+    }
+  }, "T\xFDden \u25B2"), /*#__PURE__*/React.createElement("button", {
+    onClick: next,
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      width: 32,
+      height: 32,
+      cursor: 'pointer',
+      fontSize: 16,
+      fontFamily: F
+    }
+  }, "\u203A"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(7,1fr)',
+      gap: 2,
+      marginBottom: 4
+    }
+  }, DAYS.map(function (d) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: d,
+      style: {
+        textAlign: 'center',
+        color: C.dm,
+        fontSize: 10,
+        fontWeight: 800,
+        padding: '2px 0',
+        fontFamily: F
+      }
+    }, d);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(7,1fr)',
+      gap: 2
+    }
+  }, cells.map(function (ds, i) {
+    return ds ? dayCell(ds) : /*#__PURE__*/React.createElement("div", {
+      key: 'e' + i
+    });
+  })));
+}
+
+// ── EXERCISE CARD ─────────────────────────────────────────────────────────────
+function ExCard(_ref6) {
+  var ex = _ref6.ex,
+    onAddSet = _ref6.onAddSet,
+    onUpdateSet = _ref6.onUpdateSet,
+    onRemoveSet = _ref6.onRemoveSet,
+    onRemove = _ref6.onRemove,
+    onRename = _ref6.onRename;
+  var _useState7 = useState(true),
+    _useState8 = _slicedToArray(_useState7, 2),
+    open = _useState8[0],
+    setOpen = _useState8[1];
+  var _useState9 = useState(false),
+    _useState0 = _slicedToArray(_useState9, 2),
+    editing = _useState0[0],
+    setEditing = _useState0[1];
+  var _useState1 = useState(ex.name),
+    _useState10 = _slicedToArray(_useState1, 2),
+    nm = _useState10[0],
+    setNm = _useState10[1];
+  var best = ex.sets.reduce(function (b, s) {
+    var w = parseFloat(s.weight) || 0;
+    return w > b.w ? {
+      w: w,
+      r: parseInt(s.reps) || 0
+    } : b;
+  }, {
+    w: 0,
+    r: 0
+  });
+  var commit = function commit() {
+    if (nm.trim() && nm.trim() !== ex.name) onRename(nm.trim());
+    setEditing(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      marginBottom: 6,
+      borderRadius: 2
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0,
+      cursor: 'pointer'
+    },
+    onClick: function onClick() {
+      return !editing && setOpen(!open);
+    }
+  }, editing ? /*#__PURE__*/React.createElement("input", {
+    autoFocus: true,
+    value: nm,
+    onChange: function onChange(e) {
+      return setNm(e.target.value);
+    },
+    onBlur: commit,
+    onKeyDown: function onKeyDown(e) {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') {
+        setNm(ex.name);
+        setEditing(false);
+      }
+    },
+    onClick: function onClick(e) {
+      return e.stopPropagation();
+    },
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      border: '2px solid ' + C.ac,
+      fontWeight: 800,
+      padding: '6px 8px'
+    })
+  }) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 800,
+      fontSize: 15,
+      fontFamily: F
+    }
+  }, ex.name), best.w > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.mt,
+      fontSize: 12
+    }
+  }, best.w, "kg \xD7 ", best.r))), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      flexShrink: 0
+    }
+  }, ex.sets.length, " s\xE9ri\xED"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      e.stopPropagation();
+      setNm(ex.name);
+      setEditing(!editing);
+      setOpen(true);
+    },
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.dm,
+      padding: '4px 8px',
+      cursor: 'pointer',
+      fontSize: 11,
+      fontFamily: F
+    }
+  }, "\u270F"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      e.stopPropagation();
+      onRemove();
+    },
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.er,
+      padding: '4px 8px',
+      cursor: 'pointer',
+      fontSize: 11
+    }
+  }, "\u2715"), /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick() {
+      return setOpen(!open);
+    },
+    style: {
+      cursor: 'pointer',
+      color: C.dm,
+      fontSize: 12,
+      padding: '4px'
+    }
+  }, open ? '▼' : '▶')), open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '0 16px 14px'
+    }
+  }, ex.sets.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '28px 1fr 1fr 32px',
+      gap: 6,
+      marginBottom: 6
+    }
+  }, ['#', 'KG', 'REPS', ''].map(function (h, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        color: C.dm,
+        fontSize: 10,
+        fontWeight: 800,
+        fontFamily: F
+      }
+    }, h);
+  })), ex.sets.map(function (s, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: 'grid',
+        gridTemplateColumns: '28px 1fr 1fr 32px',
+        gap: 6,
+        marginBottom: 4,
+        alignItems: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 13,
+        fontWeight: 800,
+        fontFamily: F
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("input", {
+      value: s.weight,
+      onChange: function onChange(e) {
+        return onUpdateSet(i, 'weight', e.target.value);
+      },
+      placeholder: "0",
+      type: "number",
+      step: "0.5",
+      inputMode: "decimal",
+      style: _objectSpread(_objectSpread({}, inpS), {}, {
+        padding: '9px 8px'
+      })
+    }), /*#__PURE__*/React.createElement("input", {
+      value: s.reps,
+      onChange: function onChange(e) {
+        return onUpdateSet(i, 'reps', e.target.value);
+      },
+      placeholder: "0",
+      type: "number",
+      inputMode: "numeric",
+      style: _objectSpread(_objectSpread({}, inpS), {}, {
+        padding: '9px 8px'
+      })
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return onRemoveSet(i);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.dm,
+        width: 32,
+        height: 32,
+        cursor: 'pointer',
+        fontSize: 11
+      }
+    }, "\u2715"));
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: onAddSet,
+    style: {
+      background: C.ac1,
+      border: '2px solid ' + C.ac,
+      color: C.ac,
+      padding: '10px',
+      cursor: 'pointer',
+      fontSize: 14,
+      width: '100%',
+      marginTop: 4,
+      fontFamily: F,
+      fontWeight: 800
+    }
+  }, "+ S\xE9rie")));
+}
+
+// ── PROGRESS DETAIL ───────────────────────────────────────────────────────────
+function ProgressDetail(_ref7) {
+  var name = _ref7.name,
+    entries = _ref7.entries;
+  var max = Math.max.apply(Math, _toConsumableArray(entries.map(function (e) {
+    return e.best;
+  })));
+  return cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 16,
+      fontFamily: F,
+      marginBottom: 12
+    }
+  }, name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 6,
+      fontFamily: F
+    }
+  }, "MAX. V\xC1HA (kg)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: 3,
+      height: 80
+    }
+  }, entries.map(function (e, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 9
+      }
+    }, e.best > 0 ? e.best : ''), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: '100%',
+        height: Math.max(4, Math.round(e.best / max * 70)),
+        background: i === entries.length - 1 ? C.ac : C.ac2,
+        minHeight: 4
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 8,
+        textAlign: 'center'
+      }
+    }, e.date));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: '1px solid ' + C.dv,
+      paddingTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 70px 70px',
+      gap: 4
+    }
+  }, ['DATUM', 'MAX', 'OBJEM'].map(function (h) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: h,
+      style: {
+        color: C.dm,
+        fontSize: 10,
+        fontWeight: 800,
+        fontFamily: F,
+        textAlign: h === 'DATUM' ? 'left' : 'right'
+      }
+    }, h);
+  }), entries.map(function (e, i) {
+    return [/*#__PURE__*/React.createElement("div", {
+      key: i + 'd',
+      style: {
+        color: C.mt,
+        fontSize: 12
+      }
+    }, e.date), /*#__PURE__*/React.createElement("div", {
+      key: i + 'b',
+      style: {
+        color: i === entries.length - 1 ? C.ac : C.tx,
+        fontSize: 12,
+        textAlign: 'right',
+        fontWeight: i === entries.length - 1 ? 800 : 400
+      }
+    }, e.best, " kg"), /*#__PURE__*/React.createElement("div", {
+      key: i + 'v',
+      style: {
+        color: C.mt,
+        fontSize: 12,
+        textAlign: 'right'
+      }
+    }, e.vol, " kg")];
+  })))));
+}
+
+// ── RECIPE CARD ───────────────────────────────────────────────────────────────
+function RecipeCard(_ref8) {
+  var recipe = _ref8.recipe,
+    variant = _ref8.variant,
+    onAdd = _ref8.onAdd;
+  var _useState11 = useState(false),
+    _useState12 = _slicedToArray(_useState11, 2),
+    open = _useState12[0],
+    setOpen = _useState12[1];
+  var _useState13 = useState('postup'),
+    _useState14 = _slicedToArray(_useState13, 2),
+    view = _useState14[0],
+    setView = _useState14[1];
+  var _useState15 = useState(recipe.servings),
+    _useState16 = _slicedToArray(_useState15, 2),
+    portions = _useState16[0],
+    setPortions = _useState16[1];
+  var vtab = function vtab(id, label) {
+    return /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setView(id);
+      },
+      style: {
+        background: view === id ? C.ac1 : 'transparent',
+        border: view === id ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: view === id ? C.ac : C.mt,
+        padding: '5px 12px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: view === id ? 800 : 400,
+        fontFamily: F
+      }
+    }, label);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      marginBottom: 6,
+      borderRadius: 2
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      display: 'flex',
+      gap: 10,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      cursor: 'pointer',
+      minWidth: 0
+    },
+    onClick: function onClick() {
+      return setOpen(!open);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 14,
+      fontFamily: F,
+      marginBottom: 2
+    }
+  }, recipe.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11
+    }
+  }, recipe.flavor, " \xB7 ", recipe.time, " \xB7 ", recipe.servings === 1 ? '1 porce' : recipe.servings + ' porcí'), !open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 12,
+      marginTop: 3
+    }
+  }, recipe.desc)), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setOpen(!open);
+    },
+    style: {
+      background: open ? C.ac : 'transparent',
+      color: open ? C.bg : C.ac,
+      border: '1px solid ' + C.ac,
+      padding: '6px 12px',
+      cursor: 'pointer',
+      fontSize: 12,
+      fontWeight: 800,
+      fontFamily: F,
+      flexShrink: 0
+    }
+  }, open ? '×' : 'Otevřít')), open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: '1px solid ' + C.dv,
+      padding: '12px 16px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4,
+      marginBottom: 12
+    }
+  }, vtab('postup', 'Postup'), vtab('ingredience', 'Ingredience')), view === 'postup' && /*#__PURE__*/React.createElement("div", null, recipe.steps.map(function (step, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: 'flex',
+        gap: 10,
+        marginBottom: 10,
+        padding: '10px 12px',
+        background: C.bg,
+        border: '1px solid ' + C.dv
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.bg,
+        background: C.ac,
+        fontWeight: 800,
+        fontSize: 12,
+        width: 24,
+        height: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontFamily: F
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx,
+        fontSize: 13,
+        lineHeight: 1.55
+      }
+    }, step));
+  }), recipe.protip && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ac1,
+      border: '1px solid ' + C.ac,
+      padding: '10px 12px',
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 3,
+      fontFamily: F
+    }
+  }, "PRO TIP"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 12,
+      lineHeight: 1.5
+    }
+  }, recipe.protip))), view === 'ingredience' && /*#__PURE__*/React.createElement("div", null, recipe.ingredients.map(function (ing, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 0',
+        borderBottom: '1px solid ' + C.dv
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: ing.skipLc || ing.skipLf ? C.dm : C.tx,
+        fontSize: 13
+      }
+    }, ing.name, ing.skipLc && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.dm,
+        fontSize: 10,
+        marginLeft: 6
+      }
+    }, "(LC \u2715)"), ing.skipLf && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.dm,
+        fontSize: 10,
+        marginLeft: 6
+      }
+    }, "(LF \u2715)")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.ac,
+        fontWeight: 800,
+        fontSize: 13,
+        whiteSpace: 'nowrap',
+        marginLeft: 8,
+        fontFamily: F
+      }
+    }, typeof ing.qty === 'number' ? Math.ceil(ing.qty * (portions / recipe.servings) * 10) / 10 + ' ' + ing.unit : ing.unit));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 14,
+      paddingTop: 12,
+      borderTop: '1px solid ' + C.dv
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.dm,
+      fontSize: 12
+    }
+  }, "Porc\xED:"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setPortions(Math.max(1, portions - 1));
+    },
+    style: {
+      background: C.bg,
+      border: '1px solid ' + C.dv,
+      color: C.tx,
+      width: 36,
+      height: 36,
+      cursor: 'pointer',
+      fontSize: 18,
+      fontFamily: F
+    }
+  }, "\u2212"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.ac,
+      fontWeight: 800,
+      fontSize: 20,
+      minWidth: 28,
+      textAlign: 'center',
+      fontFamily: F
+    }
+  }, portions), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setPortions(portions + 1);
+    },
+    style: {
+      background: C.bg,
+      border: '1px solid ' + C.dv,
+      color: C.tx,
+      width: 36,
+      height: 36,
+      cursor: 'pointer',
+      fontSize: 18,
+      fontFamily: F
+    }
+  }, "+"), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    style: {
+      marginLeft: 'auto'
+    },
+    onClick: function onClick() {
+      onAdd(recipe.id, portions);
+      setOpen(false);
+    }
+  }, "+ Do pl\xE1nu"))));
+}
+
+// ── TAB: DASHBOARD ────────────────────────────────────────────────────────────
+function DashTab(_ref9) {
+  var today = _ref9.today,
+    trainings = _ref9.trainings,
+    variant = _ref9.variant,
+    onGoTab = _ref9.onGoTab;
+  var ms = 7 * 24 * 60 * 60 * 1000;
+  var wk = Math.max(1, Math.min(12, Math.floor((new Date(today) - new Date(PROGRAM_START)) / ms) + 1));
+  var wp = Math.round(wk / 12 * 100);
+  var vol = 0,
+    km = 0,
+    sprints = 0;
+  Object.values(trainings).forEach(function (t) {
+    var _t$zhustovani, _t$beh;
+    (t.exercises || []).forEach(function (ex) {
+      return ex.sets.forEach(function (s) {
+        vol += (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
+      });
+    });
+    if (t.taskType === 'zhustovani' && (_t$zhustovani = t.zhustovani) !== null && _t$zhustovani !== void 0 && _t$zhustovani.vzdalenost) km += parseFloat(t.zhustovani.vzdalenost) || 0;
+    if (t.taskType === 'beh' && (_t$beh = t.beh) !== null && _t$beh !== void 0 && _t$beh.vzdalenost) km += parseFloat(t.beh.vzdalenost) || 0;
+    if (t.taskType === 'sprinty') sprints += parseInt(t.sprints) || 0;
+  });
+  var sDays = Object.keys(trainings).filter(function (k) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(k) && (trainings[k].exercises || []).length > 0;
+  }).length;
+  var volD = vol >= 1000 ? (vol / 1000).toFixed(1) + ' t' : Math.round(vol) + ' kg';
+  var allEx = {};
+  Object.entries(trainings).sort(function (_ref0, _ref1) {
+    var _ref10 = _slicedToArray(_ref0, 1),
+      a = _ref10[0];
+    var _ref11 = _slicedToArray(_ref1, 1),
+      b = _ref11[0];
+    return a.localeCompare(b);
+  }).forEach(function (_ref12) {
+    var _ref13 = _slicedToArray(_ref12, 2),
+      t = _ref13[1];
+    (t.exercises || []).forEach(function (ex) {
+      if (!allEx[ex.name]) allEx[ex.name] = [];
+      var best = ex.sets.reduce(function (b, s) {
+        return Math.max(b, parseFloat(s.weight) || 0);
+      }, 0);
+      if (best > 0 || ex.sets.length > 0) allEx[ex.name].push(best);
+    });
+  });
+  var todayT = trainings[today];
+  var stat = function stat(val, label, color) {
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: C.sf,
+        padding: '16px 8px',
+        textAlign: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: color || C.ac,
+        fontWeight: 800,
+        fontSize: 24,
+        fontFamily: F
+      }
+    }, val), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 11,
+        marginTop: 4
+      }
+    }, label));
+  };
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 14px',
+      letterSpacing: '-0.01em'
+    }
+  }, "P\u0159ehled"), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 16,
+      fontFamily: F
+    }
+  }, "T\xFDden ", wk, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.dm,
+      fontWeight: 400,
+      fontSize: 13
+    }
+  }, " / 12")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11
+    }
+  }, today)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.bg,
+      height: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ac,
+      height: '100%',
+      width: wp + '%',
+      transition: 'width 0.3s'
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginTop: 6
+    }
+  }, wp, "% programu")), {
+    marginBottom: 2
+  }), cd(todayT !== null && todayT !== void 0 && todayT.done ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ok,
+      fontWeight: 800,
+      fontSize: 14,
+      fontFamily: F
+    }
+  }, "Tr\xE9nink #", todayT.num || '', " hotov\xFD"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 12,
+      marginTop: 4
+    }
+  }, "Potr\xE9ninkov\xE9 j\xEDdlo do hodiny"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    ghost: true,
+    onClick: function onClick() {
+      return onGoTab('denik');
+    }
+  }, "Doplnit cviky \u2192"))) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 13
+    }
+  }, "Dnes je\u0161t\u011B \u017E\xE1dn\xFD z\xE1znam"), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: function onClick() {
+      return onGoTab('ukoly');
+    }
+  }, "\xDAkoly \u2192")), {
+    marginBottom: 2
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 2,
+      marginBottom: 2
+    }
+  }, stat(volD, 'Nazvedáno celkem', C.ac), stat(km.toFixed(1) + ' km', 'Kondička celkem', C.bl)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 2,
+      marginBottom: 16
+    }
+  }, stat(String(sprints), 'Sprintů celkem', C.ok), stat(sDays + '/35', 'Silové tréninky', C.ac)), Object.keys(allEx).length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, lbl('Poslední rekordy'), Object.entries(allEx).filter(function (_ref14) {
+    var _ref15 = _slicedToArray(_ref14, 2),
+      vals = _ref15[1];
+    return vals.length > 0;
+  }).slice(0, 6).map(function (_ref16) {
+    var _ref17 = _slicedToArray(_ref16, 2),
+      name = _ref17[0],
+      vals = _ref17[1];
+    var last = vals[vals.length - 1],
+      prev = vals.length > 1 ? vals[vals.length - 2] : null;
+    var diff = prev != null ? Math.round((last - prev) * 10) / 10 : null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: name,
+      style: {
+        background: C.sf,
+        borderBottom: '1px solid ' + C.dv,
+        padding: '10px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13
+      }
+    }, name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8
+      }
+    }, diff !== null && diff !== 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: diff > 0 ? C.ok : C.er,
+        fontSize: 11
+      }
+    }, diff > 0 ? '+' : '', diff, " kg"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.ac,
+        fontWeight: 800,
+        fontSize: 14,
+        fontFamily: F
+      }
+    }, last, " kg")));
+  })), variant === '?' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ac1,
+      border: '1px solid ' + C.ac,
+      borderRadius: 2,
+      padding: 14,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac7,
+      fontWeight: 800,
+      fontSize: 13,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "\u010Cek\xE1m na variantu od tren\xE9ra"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 12
+    }
+  }, "Po konzultaci nastav variantu v Nastaven\xED.")));
+}
+
+// ── TAB: ÚKOLY ────────────────────────────────────────────────────────────────
+function UkolyTab(_ref18) {
+  var today = _ref18.today,
+    trainings = _ref18.trainings,
+    onSave = _ref18.onSave,
+    onDelete = _ref18.onDelete;
+  var nextNum = Object.values(trainings).filter(function (t) {
+    return t.done;
+  }).length + 1;
+  var _useState17 = useState('sprinty'),
+    _useState18 = _slicedToArray(_useState17, 2),
+    type = _useState18[0],
+    setType = _useState18[1];
+  var _useState19 = useState(today),
+    _useState20 = _slicedToArray(_useState19, 2),
+    date = _useState20[0],
+    setDate = _useState20[1];
+  var _useState21 = useState(String(nextNum)),
+    _useState22 = _slicedToArray(_useState21, 2),
+    num = _useState22[0],
+    setNum = _useState22[1];
+  var _useState23 = useState(String(SPRINT_TABLE[nextNum] || 4)),
+    _useState24 = _slicedToArray(_useState23, 2),
+    sprints = _useState24[0],
+    setSprints = _useState24[1];
+  var _useState25 = useState(''),
+    _useState26 = _slicedToArray(_useState25, 2),
+    zhD = _useState26[0],
+    setZhD = _useState26[1];
+  var _useState27 = useState(''),
+    _useState28 = _slicedToArray(_useState27, 2),
+    zhT = _useState28[0],
+    setZhT = _useState28[1];
+  var _useState29 = useState(''),
+    _useState30 = _slicedToArray(_useState29, 2),
+    beD = _useState30[0],
+    setBeD = _useState30[1];
+  var _useState31 = useState(''),
+    _useState32 = _slicedToArray(_useState31, 2),
+    beT = _useState32[0],
+    setBeT = _useState32[1];
+  var _useState33 = useState(''),
+    _useState34 = _slicedToArray(_useState33, 2),
+    note = _useState34[0],
+    setNote = _useState34[1];
+  var _useState35 = useState(null),
+    _useState36 = _slicedToArray(_useState35, 2),
+    delConf = _useState36[0],
+    setDelConf = _useState36[1];
+  var numCh = function numCh(n) {
+    setNum(String(n));
+    setSprints(String(SPRINT_TABLE[n] || ''));
+  };
+  var save = function save() {
+    var e = {
+      taskType: type,
+      done: true
+    };
+    if (type === 'sprinty') {
+      e.num = parseInt(num) || 1;
+      e.sprints = parseInt(sprints) || 0;
+      e.note = note;
+    } else if (type === 'zhustovani') {
+      e.zhustovani = {
+        vzdalenost: zhD,
+        cas: zhT
+      };
+      e.note = note;
+    } else if (type === 'beh') {
+      e.beh = {
+        vzdalenost: beD,
+        cas: beT
+      };
+      e.note = note;
+    } else {
+      e.note = note;
+    }
+    onSave(date + '_' + type + '_' + Date.now(), e);
+    setNote('');
+    setZhD('');
+    setZhT('');
+    setBeD('');
+    setBeT('');
+  };
+  var TL = [['sprinty', 'Sprinty'], ['zhustovani', 'Zhušťování'], ['beh', 'Volný běh']];
+  var allDates = Object.entries(trainings).filter(function (_ref19) {
+    var _ref20 = _slicedToArray(_ref19, 1),
+      d = _ref20[0];
+    return !/^\d{4}-\d{2}-\d{2}$/.test(d);
+  }).sort(function (_ref21, _ref22) {
+    var _ref23 = _slicedToArray(_ref21, 1),
+      a = _ref23[0];
+    var _ref24 = _slicedToArray(_ref22, 1),
+      b = _ref24[0];
+    return b.localeCompare(a);
+  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 4px',
+      letterSpacing: '-0.01em'
+    }
+  }, "\xDAkoly"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 12,
+      marginBottom: 16
+    }
+  }, "Sprinty, b\u011Bhy, zhu\u0161\u0165ov\xE1n\xED"), cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Nový záznam'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap',
+      marginBottom: 12
+    }
+  }, TL.map(function (_ref25) {
+    var _ref26 = _slicedToArray(_ref25, 2),
+      v = _ref26[0],
+      l = _ref26[1];
+    return /*#__PURE__*/React.createElement("button", {
+      key: v,
+      onClick: function onClick() {
+        return setType(v);
+      },
+      style: {
+        background: type === v ? C.ac1 : 'transparent',
+        border: type === v ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: type === v ? C.ac : C.mt,
+        padding: '7px 14px',
+        cursor: 'pointer',
+        fontSize: 13,
+        fontWeight: type === v ? 800 : 400,
+        fontFamily: F
+      }
+    }, l);
+  })), /*#__PURE__*/React.createElement(MiniCal, {
+    selected: date,
+    onSelect: setDate,
+    trainings: trainings,
+    startCollapsed: true
+  }), type === 'sprinty' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "TR\xC9NINK #"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return numCh(Math.max(1, (parseInt(num) || 1) - 1));
+    },
+    style: {
+      background: C.bg,
+      border: '1px solid ' + C.dv,
+      color: C.tx,
+      width: 36,
+      height: 36,
+      cursor: 'pointer',
+      fontSize: 18,
+      fontFamily: F
+    }
+  }, "\u2212"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: num,
+    min: "1",
+    max: "35",
+    onChange: function onChange(e) {
+      return numCh(parseInt(e.target.value) || 1);
+    },
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      textAlign: 'center',
+      fontWeight: 800,
+      fontSize: 20
+    })
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return numCh(Math.min(35, (parseInt(num) || 1) + 1));
+    },
+    style: {
+      background: C.bg,
+      border: '1px solid ' + C.dv,
+      color: C.tx,
+      width: 36,
+      height: 36,
+      cursor: 'pointer',
+      fontSize: 18,
+      fontFamily: F
+    }
+  }, "+"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "SPRINT\u016E"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: sprints,
+    onChange: function onChange(e) {
+      return setSprints(e.target.value);
+    },
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      textAlign: 'center',
+      fontWeight: 800,
+      fontSize: 20,
+      color: C.ac
+    })
+  }))), type === 'zhustovani' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "VZD\xC1LENOST (km)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.01",
+    value: zhD,
+    onChange: function onChange(e) {
+      return setZhD(e.target.value);
+    },
+    placeholder: "3.4",
+    style: inpS
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "\u010CAS (mm:ss)"), /*#__PURE__*/React.createElement("input", {
+    value: zhT,
+    onChange: function onChange(e) {
+      return setZhT(e.target.value);
+    },
+    placeholder: "20:00",
+    style: inpS
+  }))), type === 'beh' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "VZD\xC1LENOST (km)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.01",
+    value: beD,
+    onChange: function onChange(e) {
+      return setBeD(e.target.value);
+    },
+    placeholder: "5.0",
+    style: inpS
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "\u010CAS (mm:ss)"), /*#__PURE__*/React.createElement("input", {
+    value: beT,
+    onChange: function onChange(e) {
+      return setBeT(e.target.value);
+    },
+    placeholder: "25:30",
+    style: inpS
+  }))), (type === 'beh' || type === 'zhustovani') && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 4,
+      fontFamily: F
+    }
+  }, "POZN\xC1MKA"), /*#__PURE__*/React.createElement("input", {
+    value: note,
+    onChange: function onChange(e) {
+      return setNote(e.target.value);
+    },
+    placeholder: "Voliteln\xE1 pozn\xE1mka...",
+    style: inpS
+  })), /*#__PURE__*/React.createElement(Btn, {
+    full: true,
+    onClick: save
+  }, "\u2713 Ulo\u017Eit z\xE1znam")), {
+    marginBottom: 16
+  }), delConf && /*#__PURE__*/React.createElement(Modal, {
+    onClose: function onClose() {
+      return setDelConf(null);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.er,
+      fontWeight: 800,
+      fontSize: 16,
+      marginBottom: 8,
+      fontFamily: F
+    }
+  }, "Smazat z\xE1znam?"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 13,
+      marginBottom: 20
+    }
+  }, "Trvale smaz\xE1n. Nelze vr\xE1tit."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    danger: true,
+    style: {
+      flex: 1
+    },
+    onClick: function onClick() {
+      onDelete(delConf);
+      setDelConf(null);
+    }
+  }, "Ano, smazat"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setDelConf(null);
+    },
+    style: {
+      flex: 1,
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: 10,
+      cursor: 'pointer',
+      fontSize: 13,
+      fontFamily: F
+    }
+  }, "Zru\u0161it"))), lbl('Historie'), allDates.length === 0 && empt('Zatím žádné záznamy'), allDates.map(function (_ref27) {
+    var _t$zhustovani2, _t$beh2;
+    var _ref28 = _slicedToArray(_ref27, 2),
+      d = _ref28[0],
+      t = _ref28[1];
+    var title = t.taskType === 'sprinty' ? 'Sprinty #' + (t.num || '') : t.taskType === 'zhustovani' ? 'Zhušťování' : t.taskType === 'beh' ? 'Volný běh' : 'Záznam';
+    var chips = [];
+    if (t.sprints) chips.push(t.sprints + ' sprintů');
+    if ((_t$zhustovani2 = t.zhustovani) !== null && _t$zhustovani2 !== void 0 && _t$zhustovani2.vzdalenost) chips.push(t.zhustovani.vzdalenost + ' km' + (t.zhustovani.cas ? ' / ' + t.zhustovani.cas : ''));
+    if ((_t$beh2 = t.beh) !== null && _t$beh2 !== void 0 && _t$beh2.vzdalenost) chips.push(t.beh.vzdalenost + ' km' + (t.beh.cas ? ' / ' + t.beh.cas : ''));
+    if (t.note) chips.push(t.note);
+    return /*#__PURE__*/React.createElement("div", {
+      key: d,
+      style: {
+        background: C.sf,
+        borderBottom: '1px solid ' + C.dv,
+        padding: '10px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 800,
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, title), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.dm,
+        fontSize: 11
+      }
+    }, d.slice(0, 10))), chips.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.mt,
+        fontSize: 11,
+        marginTop: 2
+      }
+    }, chips.join(' · '))), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setDelConf(d);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.er,
+        padding: '4px 8px',
+        cursor: 'pointer',
+        fontSize: 11,
+        flexShrink: 0,
+        marginLeft: 8
+      }
+    }, "\u2715"));
+  }));
+}
+
+// ── TAB: DENÍK ────────────────────────────────────────────────────────────────
+function DenikTab(_ref29) {
+  var today = _ref29.today,
+    trainings = _ref29.trainings,
+    templates = _ref29.templates,
+    onSaveEx = _ref29.onSaveEx,
+    onSaveTpl = _ref29.onSaveTpl;
+  var _useState37 = useState(today),
+    _useState38 = _slicedToArray(_useState37, 2),
+    selDate = _useState38[0],
+    setSelDate = _useState38[1];
+  var _useState39 = useState('log'),
+    _useState40 = _slicedToArray(_useState39, 2),
+    view = _useState40[0],
+    setView = _useState40[1];
+  var _useState41 = useState(''),
+    _useState42 = _slicedToArray(_useState41, 2),
+    newEx = _useState42[0],
+    setNewEx = _useState42[1];
+  var _useState43 = useState(null),
+    _useState44 = _slicedToArray(_useState43, 2),
+    progEx = _useState44[0],
+    setProgEx = _useState44[1];
+  var _useState45 = useState(false),
+    _useState46 = _slicedToArray(_useState45, 2),
+    tplMode = _useState46[0],
+    setTplMode = _useState46[1];
+  var _useState47 = useState(''),
+    _useState48 = _slicedToArray(_useState47, 2),
+    tplName = _useState48[0],
+    setTplName = _useState48[1];
+  var _useState49 = useState(''),
+    _useState50 = _slicedToArray(_useState49, 2),
+    tplExs = _useState50[0],
+    setTplExs = _useState50[1];
+  var _useState51 = useState(null),
+    _useState52 = _slicedToArray(_useState51, 2),
+    editTpl = _useState52[0],
+    setEditTpl = _useState52[1];
+  var _useState53 = useState(''),
+    _useState54 = _slicedToArray(_useState53, 2),
+    editTplName = _useState54[0],
+    setEditTplName = _useState54[1];
+  var _useState55 = useState(''),
+    _useState56 = _slicedToArray(_useState55, 2),
+    editTplExs = _useState56[0],
+    setEditTplExs = _useState56[1];
+  var tr = trainings[selDate] || {},
+    exercises = tr.exercises || [];
+  var dayTasks = Object.entries(trainings).filter(function (_ref30) {
+    var _ref31 = _slicedToArray(_ref30, 1),
+      k = _ref31[0];
+    return k.startsWith(selDate) && !/^\d{4}-\d{2}-\d{2}$/.test(k);
+  }).map(function (_ref32) {
+    var _ref33 = _slicedToArray(_ref32, 2),
+      v = _ref33[1];
+    return v;
+  });
+  var addEx = function addEx() {
+    if (!newEx.trim()) return;
+    onSaveEx(selDate, [].concat(_toConsumableArray(exercises), [{
+      id: Date.now() + '',
+      name: newEx.trim(),
+      sets: []
+    }]));
+    setNewEx('');
+  };
+  var addFromTpl = function addFromTpl(tpl) {
+    var ex = new Set(exercises.map(function (e) {
+      return e.name;
+    }));
+    onSaveEx(selDate, [].concat(_toConsumableArray(exercises), _toConsumableArray(tpl.exercises.filter(function (e) {
+      return !ex.has(e);
+    }).map(function (e) {
+      return {
+        id: Date.now() + Math.random() + '',
+        name: e,
+        sets: []
+      };
+    }))));
+  };
+  var addSet = function addSet(id) {
+    return onSaveEx(selDate, exercises.map(function (e) {
+      return e.id === id ? _objectSpread(_objectSpread({}, e), {}, {
+        sets: [].concat(_toConsumableArray(e.sets), [{
+          weight: '',
+          reps: ''
+        }])
+      }) : e;
+    }));
+  };
+  var updSet = function updSet(id, si, f, v) {
+    return onSaveEx(selDate, exercises.map(function (e) {
+      return e.id === id ? _objectSpread(_objectSpread({}, e), {}, {
+        sets: e.sets.map(function (s, i) {
+          return i === si ? _objectSpread(_objectSpread({}, s), {}, _defineProperty({}, f, v)) : s;
+        })
+      }) : e;
+    }));
+  };
+  var rmSet = function rmSet(id, si) {
+    return onSaveEx(selDate, exercises.map(function (e) {
+      return e.id === id ? _objectSpread(_objectSpread({}, e), {}, {
+        sets: e.sets.filter(function (_, i) {
+          return i !== si;
+        })
+      }) : e;
+    }));
+  };
+  var rmEx = function rmEx(id) {
+    return onSaveEx(selDate, exercises.filter(function (e) {
+      return e.id !== id;
+    }));
+  };
+  var renEx = function renEx(id, nm) {
+    return onSaveEx(selDate, exercises.map(function (e) {
+      return e.id === id ? _objectSpread(_objectSpread({}, e), {}, {
+        name: nm
+      }) : e;
+    }));
+  };
+  var allProg = {};
+  Object.entries(trainings).sort(function (_ref34, _ref35) {
+    var _ref36 = _slicedToArray(_ref34, 1),
+      a = _ref36[0];
+    var _ref37 = _slicedToArray(_ref35, 1),
+      b = _ref37[0];
+    return a.localeCompare(b);
+  }).forEach(function (_ref38) {
+    var _ref39 = _slicedToArray(_ref38, 2),
+      date = _ref39[0],
+      t = _ref39[1];
+    (t.exercises || []).forEach(function (ex) {
+      if (!allProg[ex.name]) allProg[ex.name] = [];
+      var best = ex.sets.reduce(function (b, s) {
+        return Math.max(b, parseFloat(s.weight) || 0);
+      }, 0);
+      var vol = ex.sets.reduce(function (s, set) {
+        return s + (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
+      }, 0);
+      if (best > 0 || ex.sets.length > 0) allProg[ex.name].push({
+        date: date,
+        best: best,
+        vol: vol
+      });
+    });
+  });
+  var exNames = Object.keys(allProg).sort();
+  var saveTpl = function saveTpl() {
+    if (!tplName.trim() || !tplExs.trim()) return;
+    onSaveTpl([].concat(_toConsumableArray(templates), [{
+      id: Date.now() + '',
+      name: tplName.trim(),
+      exercises: tplExs.split('\n').map(function (s) {
+        return s.trim();
+      }).filter(Boolean)
+    }]));
+    setTplName('');
+    setTplExs('');
+    setTplMode(false);
+  };
+  var saveEditTpl = function saveEditTpl() {
+    onSaveTpl(templates.map(function (t) {
+      return t.id === editTpl ? _objectSpread(_objectSpread({}, t), {}, {
+        name: editTplName.trim(),
+        exercises: editTplExs.split('\n').map(function (s) {
+          return s.trim();
+        }).filter(Boolean)
+      }) : t;
+    }));
+    setEditTpl(null);
+  };
+  var vtab = function vtab(id, label) {
+    return /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setView(id);
+      },
+      style: {
+        background: view === id ? C.ac1 : 'transparent',
+        border: view === id ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: view === id ? C.ac : C.mt,
+        padding: '5px 12px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: view === id ? 800 : 400,
+        fontFamily: F
+      }
+    }, label);
+  };
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      margin: '16px 0'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      letterSpacing: '-0.01em'
+    }
+  }, "Den\xEDk"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4
+    }
+  }, vtab('log', 'Log'), vtab('progress', 'Progres'), vtab('templates', 'Šablony'))), view === 'log' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(MiniCal, {
+    selected: selDate,
+    onSelect: setSelDate,
+    trainings: trainings,
+    startCollapsed: true
+  }), dayTasks.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, lbl('Kondička'), dayTasks.map(function (t, i) {
+    var _t$zhustovani3, _t$beh3;
+    var label = t.taskType === 'sprinty' ? 'Sprinty #' + (t.num || '') + ' — ' + (t.sprints || 0) + ' sprintů' : t.taskType === 'zhustovani' ? 'Zhušťování — ' + (((_t$zhustovani3 = t.zhustovani) === null || _t$zhustovani3 === void 0 ? void 0 : _t$zhustovani3.vzdalenost) || '?') + ' km' : t.taskType === 'beh' ? 'Běh — ' + (((_t$beh3 = t.beh) === null || _t$beh3 === void 0 ? void 0 : _t$beh3.vzdalenost) || '?') + ' km' : t.note || 'Záznam';
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        background: C.bg,
+        border: '1px solid ' + C.dv,
+        padding: '8px 12px',
+        marginBottom: 4,
+        fontSize: 13
+      }
+    }, label);
+  })), templates.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12,
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontFamily: F,
+      fontWeight: 800
+    }
+  }, "\u0160ABLONA:"), templates.map(function (tpl) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: tpl.id,
+      onClick: function onClick() {
+        return addFromTpl(tpl);
+      },
+      style: {
+        background: C.sf,
+        border: '1px solid ' + C.dv,
+        color: C.mt,
+        padding: '5px 10px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontFamily: F
+      }
+    }, "+ ", tpl.name);
+  })), exercises.map(function (ex) {
+    return /*#__PURE__*/React.createElement(ExCard, {
+      key: ex.id,
+      ex: ex,
+      onAddSet: function onAddSet() {
+        return addSet(ex.id);
+      },
+      onUpdateSet: function onUpdateSet(si, f, v) {
+        return updSet(ex.id, si, f, v);
+      },
+      onRemoveSet: function onRemoveSet(si) {
+        return rmSet(ex.id, si);
+      },
+      onRemove: function onRemove() {
+        return rmEx(ex.id);
+      },
+      onRename: function onRename(nm) {
+        return renEx(ex.id, nm);
+      }
+    });
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: newEx,
+    onChange: function onChange(e) {
+      return setNewEx(e.target.value);
+    },
+    onKeyDown: function onKeyDown(e) {
+      return e.key === 'Enter' && addEx();
+    },
+    placeholder: "N\xE1zev cviku (D\u0159ep, Bench\u2026)",
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      flex: 1
+    })
+  }), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: addEx
+  }, "+ Cvik"))), view === 'progress' && /*#__PURE__*/React.createElement("div", null, lbl('Vybrat cvik'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 16
+    }
+  }, exNames.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm
+    }
+  }, "Zat\xEDm \u017E\xE1dn\xE9 z\xE1znamy"), exNames.map(function (nm) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: nm,
+      onClick: function onClick() {
+        return setProgEx(progEx === nm ? null : nm);
+      },
+      style: {
+        background: progEx === nm ? C.ac1 : C.sf,
+        border: progEx === nm ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: progEx === nm ? C.ac : C.mt,
+        padding: '6px 14px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontFamily: F
+      }
+    }, nm);
+  })), progEx && allProg[progEx] && /*#__PURE__*/React.createElement(ProgressDetail, {
+    name: progEx,
+    entries: allProg[progEx]
+  })), view === 'templates' && /*#__PURE__*/React.createElement("div", null, templates.map(function (tpl) {
+    return editTpl === tpl.id ? /*#__PURE__*/React.createElement("div", {
+      key: tpl.id,
+      style: {
+        background: C.sf,
+        padding: '14px 16px',
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        marginBottom: 8,
+        fontFamily: F
+      }
+    }, "UPRAVIT \u0160ABLONU"), /*#__PURE__*/React.createElement("input", {
+      value: editTplName,
+      onChange: function onChange(e) {
+        return setEditTplName(e.target.value);
+      },
+      style: _objectSpread(_objectSpread({}, inpS), {}, {
+        marginBottom: 8
+      })
+    }), /*#__PURE__*/React.createElement("textarea", {
+      value: editTplExs,
+      onChange: function onChange(e) {
+        return setEditTplExs(e.target.value);
+      },
+      rows: 5,
+      style: _objectSpread(_objectSpread({}, inpS), {}, {
+        resize: 'vertical',
+        minHeight: 90
+      })
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.dm,
+        margin: '6px 0 10px'
+      }
+    }, "Cviky v logu z\u016Fstanou nedot\u010Den\xE9."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement(Btn, {
+      sm: true,
+      onClick: saveEditTpl
+    }, "Ulo\u017Eit"), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setEditTpl(null);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.mt,
+        padding: '7px 14px',
+        cursor: 'pointer',
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, "Zru\u0161it"))) : /*#__PURE__*/React.createElement("div", {
+      key: tpl.id,
+      style: {
+        background: C.sf,
+        padding: '14px 16px',
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 800,
+        fontSize: 14,
+        fontFamily: F,
+        marginBottom: 4
+      }
+    }, tpl.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.mt,
+        fontSize: 12
+      }
+    }, tpl.exercises.join(' · '))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        setEditTpl(tpl.id);
+        setEditTplName(tpl.name);
+        setEditTplExs(tpl.exercises.join('\n'));
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.mt,
+        padding: '3px 8px',
+        cursor: 'pointer',
+        fontSize: 11
+      }
+    }, "\u270F"), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return onSaveTpl(templates.filter(function (t) {
+          return t.id !== tpl.id;
+        }));
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.er,
+        padding: '3px 8px',
+        cursor: 'pointer',
+        fontSize: 11
+      }
+    }, "\u2715"))));
+  }), !tplMode ? /*#__PURE__*/React.createElement(Btn, {
+    ghost: true,
+    onClick: function onClick() {
+      return setTplMode(true);
+    }
+  }, "+ Nov\xE1 \u0161ablona") : cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Nová šablona'), /*#__PURE__*/React.createElement("input", {
+    value: tplName,
+    onChange: function onChange(e) {
+      return setTplName(e.target.value);
+    },
+    placeholder: "N\xE1zev (nap\u0159. Pond\u011Bl\xED \u2014 tlaky)",
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      marginBottom: 8
+    })
+  }), /*#__PURE__*/React.createElement("textarea", {
+    value: tplExs,
+    onChange: function onChange(e) {
+      return setTplExs(e.target.value);
+    },
+    placeholder: "Každý cvik na nový řádek:\nDřep\nBenchpress\nMrtvý tah",
+    rows: 5,
+    style: _objectSpread(_objectSpread({}, inpS), {}, {
+      resize: 'vertical',
+      minHeight: 90
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: saveTpl
+  }, "Ulo\u017Eit"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setTplMode(false);
+    },
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: '7px 14px',
+      cursor: 'pointer',
+      fontSize: 13,
+      fontFamily: F
+    }
+  }, "Zru\u0161it"))), {
+    marginTop: 8
+  })));
+}
+
+// ── TAB: JÍDLO ────────────────────────────────────────────────────────────────
+function JidloTab(_ref40) {
+  var _foodLog$find;
+  var today = _ref40.today,
+    foodLog = _ref40.foodLog,
+    onSave = _ref40.onSave;
+  var _useState57 = useState(today),
+    _useState58 = _slicedToArray(_useState57, 2),
+    selDate = _useState58[0],
+    setSelDate = _useState58[1];
+  var _useState59 = useState(false),
+    _useState60 = _slicedToArray(_useState59, 2),
+    adding = _useState60[0],
+    setAdding = _useState60[1];
+  var _useState61 = useState({
+      name: '',
+      time: '',
+      protein: '',
+      carbs: '',
+      fat: '',
+      kcal: '',
+      status: 'ok',
+      note: ''
+    }),
+    _useState62 = _slicedToArray(_useState61, 2),
+    form = _useState62[0],
+    setForm = _useState62[1];
+  var _useState63 = useState(null),
+    _useState64 = _slicedToArray(_useState63, 2),
+    delConf = _useState64[0],
+    setDelConf = _useState64[1];
+  var dayLog = foodLog.filter(function (e) {
+    return e.date === selDate;
+  }).sort(function (a, b) {
+    return a.time.localeCompare(b.time);
+  });
+  var dayP = dayLog.reduce(function (s, e) {
+    return s + (parseFloat(e.protein) || 0);
+  }, 0);
+  var dayK = dayLog.reduce(function (s, e) {
+    return s + (parseFloat(e.kcal) || 0);
+  }, 0);
+  var pPct = Math.min(100, Math.round(dayP / PROTEIN_GOAL * 100));
+  var upd = function upd(f, v) {
+    return setForm(function (p) {
+      return _objectSpread(_objectSpread({}, p), {}, _defineProperty({}, f, v));
+    });
+  };
+  var add = function add() {
+    if (!form.name.trim()) return;
+    onSave([].concat(_toConsumableArray(foodLog), [{
+      id: Date.now() + '',
+      date: selDate,
+      time: form.time || new Date().toTimeString().slice(0, 5),
+      name: form.name.trim(),
+      protein: parseFloat(form.protein) || 0,
+      carbs: parseFloat(form.carbs) || 0,
+      fat: parseFloat(form.fat) || 0,
+      kcal: parseFloat(form.kcal) || 0,
+      status: form.status,
+      note: form.note.trim()
+    }]));
+    setForm({
+      name: '',
+      time: '',
+      protein: '',
+      carbs: '',
+      fat: '',
+      kcal: '',
+      status: 'ok',
+      note: ''
+    });
+    setAdding(false);
+  };
+  var yd = new Date();
+  yd.setDate(yd.getDate() - 1);
+  var dateBtns = [{
+    l: 'Dnes',
+    d: today
+  }, {
+    l: 'Včera',
+    d: yd.toISOString().slice(0, 10)
+  }];
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 4px',
+      letterSpacing: '-0.01em'
+    }
+  }, "J\xEDdeln\xED log"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 12,
+      marginBottom: 12
+    }
+  }, "Fotku j\xEDdla po\u0161li do chatu \u2014 zap\xED\u0161u automaticky"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      marginBottom: 12
+    }
+  }, dateBtns.map(function (b) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: b.d,
+      onClick: function onClick() {
+        return setSelDate(b.d);
+      },
+      style: {
+        background: selDate === b.d ? C.ac1 : 'transparent',
+        border: selDate === b.d ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: selDate === b.d ? C.ac : C.mt,
+        padding: '6px 14px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: selDate === b.d ? 800 : 400,
+        fontFamily: F
+      }
+    }, b.l);
+  })), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 15,
+      fontFamily: F
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: dayP >= PROTEIN_GOAL ? C.ok : C.ac
+    }
+  }, Math.round(dayP), "g"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.dm,
+      fontWeight: 400
+    }
+  }, " / ", PROTEIN_GOAL, "g b\xEDlkovin")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11
+    }
+  }, Math.round(dayK), " kcal")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.bg,
+      height: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: dayP >= PROTEIN_GOAL ? C.ok : C.ac,
+      height: '100%',
+      width: pPct + '%',
+      transition: 'width 0.3s'
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginTop: 4
+    }
+  }, pPct, "% \xB7 zb\xFDv\xE1 ", Math.max(0, Math.round(PROTEIN_GOAL - dayP)), "g")), {
+    marginBottom: 12
+  }), delConf && /*#__PURE__*/React.createElement(Modal, {
+    onClose: function onClose() {
+      return setDelConf(null);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.er,
+      fontWeight: 800,
+      fontSize: 15,
+      marginBottom: 8,
+      fontFamily: F
+    }
+  }, "Smazat?"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 13,
+      marginBottom: 16
+    }
+  }, (_foodLog$find = foodLog.find(function (e) {
+    return e.id === delConf;
+  })) === null || _foodLog$find === void 0 ? void 0 : _foodLog$find.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    danger: true,
+    style: {
+      flex: 1
+    },
+    onClick: function onClick() {
+      onSave(foodLog.filter(function (e) {
+        return e.id !== delConf;
+      }));
+      setDelConf(null);
+    }
+  }, "Smazat"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setDelConf(null);
+    },
+    style: {
+      flex: 1,
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: 10,
+      cursor: 'pointer',
+      fontSize: 13,
+      fontFamily: F
+    }
+  }, "Zru\u0161it"))), dayLog.length === 0 && !adding && empt('Žádné záznamy pro ' + selDate), dayLog.map(function (e) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      style: {
+        background: C.sf,
+        borderBottom: '1px solid ' + (e.status === 'problem' ? C.er : C.dv),
+        padding: '10px 16px'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.dm,
+        fontSize: 11
+      }
+    }, e.time), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 800,
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, e.name), e.status === 'problem' && /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: C.er + '22',
+        color: C.er,
+        fontSize: 10,
+        padding: '1px 6px',
+        fontWeight: 800
+      }
+    }, "POZOR"), e.status === 'ok' && /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: C.ok + '22',
+        color: C.ok,
+        fontSize: 10,
+        padding: '1px 6px',
+        fontWeight: 800
+      }
+    }, "OK")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 12,
+        marginTop: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.ac,
+        fontSize: 12,
+        fontWeight: 800
+      }
+    }, e.protein, "g B"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.mt,
+        fontSize: 12
+      }
+    }, e.carbs, "g S"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.mt,
+        fontSize: 12
+      }
+    }, e.fat, "g T"), e.kcal > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.dm,
+        fontSize: 12
+      }
+    }, e.kcal, " kcal")), e.note && /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 11,
+        marginTop: 3
+      }
+    }, e.note)), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setDelConf(e.id);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.er,
+        padding: '3px 7px',
+        cursor: 'pointer',
+        fontSize: 11,
+        marginLeft: 8,
+        flexShrink: 0
+      }
+    }, "\u2715")));
+  }), adding ? cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Přidat jídlo ručně'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginBottom: 3,
+      fontWeight: 800,
+      fontFamily: F
+    }
+  }, "N\xC1ZEV"), /*#__PURE__*/React.createElement("input", {
+    value: form.name,
+    onChange: function onChange(e) {
+      return upd('name', e.target.value);
+    },
+    placeholder: "Ku\u0159ec\xED prsa s r\xFD\u017E\xED",
+    style: inpS
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginBottom: 3,
+      fontWeight: 800,
+      fontFamily: F
+    }
+  }, "\u010CAS"), /*#__PURE__*/React.createElement("input", {
+    type: "time",
+    value: form.time,
+    onChange: function onChange(e) {
+      return upd('time', e.target.value);
+    },
+    style: inpS
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr 1fr',
+      gap: 6,
+      marginBottom: 8
+    }
+  }, [['protein', 'B'], ['carbs', 'S'], ['fat', 'T'], ['kcal', 'kcal']].map(function (_ref41) {
+    var _ref42 = _slicedToArray(_ref41, 2),
+      f = _ref42[0],
+      s = _ref42[1];
+    return /*#__PURE__*/React.createElement("div", {
+      key: f
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 10,
+        marginBottom: 3,
+        fontWeight: 800,
+        fontFamily: F
+      }
+    }, s), /*#__PURE__*/React.createElement("input", {
+      type: "number",
+      step: "0.1",
+      value: form[f],
+      onChange: function onChange(e) {
+        return upd(f, e.target.value);
+      },
+      placeholder: "0",
+      style: inpS
+    }));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginBottom: 4,
+      fontWeight: 800,
+      fontFamily: F
+    }
+  }, "STATUS"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6
+    }
+  }, [['ok', 'OK', C.ok], ['problem', 'Problém', C.er], ['cheat', 'Cheat', C.wa]].map(function (_ref43) {
+    var _ref44 = _slicedToArray(_ref43, 3),
+      v = _ref44[0],
+      l = _ref44[1],
+      c = _ref44[2];
+    return /*#__PURE__*/React.createElement("button", {
+      key: v,
+      onClick: function onClick() {
+        return upd('status', v);
+      },
+      style: {
+        background: form.status === v ? c + '22' : 'transparent',
+        border: form.status === v ? '1px solid ' + c : '1px solid ' + C.dv,
+        color: form.status === v ? c : C.mt,
+        padding: '5px 12px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: form.status === v ? 800 : 400,
+        fontFamily: F
+      }
+    }, l);
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      marginBottom: 3,
+      fontWeight: 800,
+      fontFamily: F
+    }
+  }, "POZN\xC1MKA"), /*#__PURE__*/React.createElement("input", {
+    value: form.note,
+    onChange: function onChange(e) {
+      return upd('note', e.target.value);
+    },
+    placeholder: "Voliteln\xE1 pozn\xE1mka...",
+    style: inpS
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: add
+  }, "P\u0159idat"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setAdding(false);
+    },
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: '7px 14px',
+      cursor: 'pointer',
+      fontSize: 13,
+      fontFamily: F
+    }
+  }, "Zru\u0161it"))), {
+    marginTop: 8
+  }) : /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setAdding(true);
+    },
+    style: {
+      background: 'none',
+      border: '2px dashed ' + C.dv,
+      color: C.mt,
+      padding: '12px',
+      cursor: 'pointer',
+      fontSize: 13,
+      width: '100%',
+      marginTop: 10,
+      fontFamily: F,
+      fontWeight: 800
+    }
+  }, "+ P\u0159idat j\xEDdlo ru\u010Dn\u011B"));
+}
+
+// ── TAB: RECEPTY ──────────────────────────────────────────────────────────────
+function ReceptyTab(_ref45) {
+  var mealPlan = _ref45.mealPlan,
+    variant = _ref45.variant,
+    onAdd = _ref45.onAdd,
+    onRemove = _ref45.onRemove,
+    onBuildList = _ref45.onBuildList,
+    onGoTab = _ref45.onGoTab;
+  var _useState65 = useState('hlavní jídlo'),
+    _useState66 = _slicedToArray(_useState65, 2),
+    selCat = _useState66[0],
+    setSelCat = _useState66[1];
+  var isAllowed = function isAllowed(r) {
+    return variant === '?' || r.variants[variant];
+  };
+  var filtered = RECIPES.filter(function (r) {
+    return r.cat === selCat && isAllowed(r);
+  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 14px',
+      letterSpacing: '-0.01em'
+    }
+  }, "Recepty"), mealPlan.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, lbl('Tvůj plán'), mealPlan.map(function (item, idx) {
+    var r = RECIPES.find(function (r) {
+      return r.id === item.recipeId;
+    });
+    if (!r) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: idx,
+      style: {
+        background: C.sf,
+        borderBottom: '1px solid ' + C.dv,
+        padding: '10px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 800,
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, r.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.dm,
+        fontSize: 11
+      }
+    }, r.cat, " \xB7 ", item.portions, "\xD7")), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return onRemove(idx);
+      },
+      style: {
+        background: 'none',
+        border: '1px solid ' + C.dv,
+        color: C.er,
+        padding: '3px 7px',
+        cursor: 'pointer',
+        fontSize: 11
+      }
+    }, "\u2715"));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: onBuildList
+  }, "N\xE1kupn\xED seznam \u2192"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4,
+      marginBottom: 12,
+      flexWrap: 'wrap'
+    }
+  }, CATEGORIES.map(function (cat) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: cat,
+      onClick: function onClick() {
+        return setSelCat(cat);
+      },
+      style: {
+        background: selCat === cat ? C.ac1 : 'transparent',
+        border: selCat === cat ? '1px solid ' + C.ac : '1px solid ' + C.dv,
+        color: selCat === cat ? C.ac : C.mt,
+        padding: '6px 12px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: selCat === cat ? 800 : 400,
+        fontFamily: F
+      }
+    }, cat);
+  })), filtered.map(function (r) {
+    return /*#__PURE__*/React.createElement(RecipeCard, {
+      key: r.id,
+      recipe: r,
+      variant: variant,
+      onAdd: onAdd
+    });
+  }), filtered.length === 0 && empt('Žádné recepty pro tuto variantu'));
+}
+
+// ── TAB: NÁKUP ────────────────────────────────────────────────────────────────
+function NakupTab(_ref46) {
+  var mealPlan = _ref46.mealPlan,
+    shoppingList = _ref46.shoppingList,
+    shareCode = _ref46.shareCode,
+    variant = _ref46.variant,
+    onBuild = _ref46.onBuild,
+    onGoTab = _ref46.onGoTab,
+    onRegen = _ref46.onRegen;
+  var _useState67 = useState({}),
+    _useState68 = _slicedToArray(_useState67, 2),
+    checked = _useState68[0],
+    setChecked = _useState68[1];
+  if (mealPlan.length === 0) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '40px 0'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      marginBottom: 12
+    }
+  }, "Nejd\u0159\xEDv p\u0159idej recepty do pl\xE1nu"), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: function onClick() {
+      return onGoTab('recepty');
+    }
+  }, "P\u0159idat j\xEDdla \u2192"));
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 14px',
+      letterSpacing: '-0.01em'
+    }
+  }, "N\xE1kupn\xED seznam"), !shoppingList ? /*#__PURE__*/React.createElement(Btn, {
+    full: true,
+    onClick: onBuild
+  }, "Vygenerovat seznam") : /*#__PURE__*/React.createElement("div", null, shareCode && cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 6,
+      fontFamily: F
+    }
+  }, "K\xD3D PRO SD\xCDLEN\xCD"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontWeight: 800,
+      fontSize: 28,
+      letterSpacing: 6,
+      fontFamily: F
+    }
+  }, shareCode)), {
+    marginBottom: 12
+  }), lbl(shoppingList.length + ' položek'), shoppingList.map(function (item, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        background: C.sf,
+        borderBottom: '1px solid ' + C.dv,
+        padding: '10px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        opacity: checked[i] ? 0.4 : 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      checked: !!checked[i],
+      onChange: function onChange(e) {
+        return setChecked(_objectSpread(_objectSpread({}, checked), {}, _defineProperty({}, i, e.target.checked)));
+      },
+      style: {
+        accentColor: C.ac,
+        width: 18,
+        height: 18,
+        cursor: 'pointer'
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: checked[i] ? C.dm : C.tx,
+        fontSize: 14,
+        textDecoration: checked[i] ? 'line-through' : 'none'
+      }
+    }, item.name)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.ac,
+        fontWeight: 800,
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, item.qty, " ", item.unit));
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: onRegen,
+    style: {
+      background: 'none',
+      border: '1px solid ' + C.dv,
+      color: C.mt,
+      padding: '8px 16px',
+      cursor: 'pointer',
+      marginTop: 12,
+      fontSize: 13,
+      fontFamily: F
+    }
+  }, "P\u0159egenerovat")));
+}
+
+// ── TAB: NASTAVENÍ ────────────────────────────────────────────────────────────
+function NastaveniTab(_ref47) {
+  var variant = _ref47.variant,
+    onSetVariant = _ref47.onSetVariant,
+    onMigrateFromLocalStorage = _ref47.onMigrateFromLocalStorage;
+  var _useState69 = useState(null),
+    _useState70 = _slicedToArray(_useState69, 2),
+    migStatus = _useState70[0],
+    setMigStatus = _useState70[1]; // null | 'running' | 'done' | 'empty'
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 800,
+      fontFamily: F,
+      margin: '16px 0 14px',
+      letterSpacing: '-0.01em'
+    }
+  }, "Nastaven\xED"), cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Výživová varianta'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 12,
+      marginBottom: 12
+    }
+  }, "Nastav po konzultaci s tren\xE9rem"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 8
+    }
+  }, Object.entries(VARIANT_LABELS).map(function (_ref48) {
+    var _ref49 = _slicedToArray(_ref48, 2),
+      key = _ref49[0],
+      _ref49$ = _ref49[1],
+      label = _ref49$.label,
+      color = _ref49$.color;
+    return /*#__PURE__*/React.createElement("button", {
+      key: key,
+      onClick: function onClick() {
+        return onSetVariant(key);
+      },
+      style: {
+        background: variant === key ? color + '22' : C.bg,
+        border: variant === key ? '1px solid ' + color : '1px solid ' + C.dv,
+        borderRadius: 2,
+        color: variant === key ? color : C.mt,
+        padding: '12px',
+        cursor: 'pointer',
+        fontWeight: variant === key ? 800 : 400,
+        fontSize: 13,
+        fontFamily: F
+      }
+    }, label);
+  }))), {
+    marginBottom: 12
+  }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Program'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.mt,
+      fontSize: 13,
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "Amazing 12 \u2014 \u017Delezn\xE1 Koule"), /*#__PURE__*/React.createElement("div", null, "T\xFDden 1: 7. z\xE1\u0159\xED 2026"), /*#__PURE__*/React.createElement("div", null, "35 tr\xE9nink\u016F \xB7 5\xD7 t\xFDdn\u011B \xB7 ~1 hodina"))), {
+    marginBottom: 12
+  }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Denní protein cíl'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontWeight: 800,
+      fontSize: 28,
+      marginBottom: 6,
+      fontFamily: F
+    }
+  }, "160 g"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 12,
+      lineHeight: 1.7
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "5\u20136 j\xEDdel denn\u011B \xB7 ka\u017Ed\xE9 ~27\u201332g b\xEDlkovin"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, "\xB7 Ku\u0159ec\xED prsa 150g \u2192 ~33g"), /*#__PURE__*/React.createElement("div", null, "\xB7 Tvaroh 200g \u2192 ~28g \xB7 Skyr 250g \u2192 ~27g"), /*#__PURE__*/React.createElement("div", null, "\xB7 Treska 200g \u2192 ~40g \xB7 Vejce 3ks+2b\xEDlky \u2192 ~26g")))), cd(/*#__PURE__*/React.createElement(React.Fragment, null, lbl('Přenos dat z prohlížeče'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 12,
+      marginBottom: 12,
+      lineHeight: 1.6
+    }
+  }, "Pokud m\xE1\u0161 star\xE1 data z p\u0159edchoz\xED verze aplikace ulo\u017Een\xE1 v tomto prohl\xED\u017Ee\u010Di, p\u0159enese je do Supabase. Sta\u010D\xED jednou."), migStatus === 'done' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ok,
+      fontSize: 13,
+      marginBottom: 10,
+      fontWeight: 800
+    }
+  }, "\u2713 Data p\u0159enesena do Supabase"), migStatus === 'empty' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 13,
+      marginBottom: 10
+    }
+  }, "V prohl\xED\u017Ee\u010Di nebyla nalezena \u017E\xE1dn\xE1 star\xE1 data."), migStatus === 'running' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontSize: 13,
+      marginBottom: 10
+    }
+  }, "P\u0159en\xE1\u0161\xEDm\u2026"), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    ghost: true,
+    onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
+      var keys, found, _i2, _keys, k, raw, val, _t;
+      return _regenerator().w(function (_context) {
+        while (1) switch (_context.p = _context.n) {
+          case 0:
+            setMigStatus('running');
+            keys = ['a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'a12:shareCode', 'a12:variant', 'deburter:foodlog'];
+            found = 0;
+            _i2 = 0, _keys = keys;
+          case 1:
+            if (!(_i2 < _keys.length)) {
+              _context.n = 7;
+              break;
+            }
+            k = _keys[_i2];
+            _context.p = 2;
+            raw = localStorage.getItem(k);
+            if (raw) {
+              _context.n = 3;
+              break;
+            }
+            return _context.a(3, 6);
+          case 3:
+            found++;
+            val = JSON.parse(raw);
+            _context.n = 4;
+            return sSave(k, val);
+          case 4:
+            _context.n = 6;
+            break;
+          case 5:
+            _context.p = 5;
+            _t = _context.v;
+          case 6:
+            _i2++;
+            _context.n = 1;
+            break;
+          case 7:
+            setMigStatus(found > 0 ? 'done' : 'empty');
+            if (found > 0) onMigrateFromLocalStorage();
+          case 8:
+            return _context.a(2);
+        }
+      }, _callee, null, [[2, 5]]);
+    }))
+  }, "Na\u010D\xEDst data z tohoto prohl\xED\u017Ee\u010De \u2192 Supabase"))));
+}
+function App() {
+  var _useState71 = useState('dashboard'),
+    _useState72 = _slicedToArray(_useState71, 2),
+    tab = _useState72[0],
+    setTab = _useState72[1];
+  var _useState73 = useState('?'),
+    _useState74 = _slicedToArray(_useState73, 2),
+    variant = _useState74[0],
+    setVariant = _useState74[1];
+  var _useState75 = useState({}),
+    _useState76 = _slicedToArray(_useState75, 2),
+    trainings = _useState76[0],
+    setTrainings = _useState76[1];
+  var _useState77 = useState([]),
+    _useState78 = _slicedToArray(_useState77, 2),
+    templates = _useState78[0],
+    setTemplates = _useState78[1];
+  var _useState79 = useState([]),
+    _useState80 = _slicedToArray(_useState79, 2),
+    mealPlan = _useState80[0],
+    setMealPlan = _useState80[1];
+  var _useState81 = useState(null),
+    _useState82 = _slicedToArray(_useState81, 2),
+    shoppingList = _useState82[0],
+    setShoppingList = _useState82[1];
+  var _useState83 = useState(null),
+    _useState84 = _slicedToArray(_useState83, 2),
+    shareCode = _useState84[0],
+    setShareCode = _useState84[1];
+  var _useState85 = useState([]),
+    _useState86 = _slicedToArray(_useState85, 2),
+    foodLog = _useState86[0],
+    setFoodLog = _useState86[1];
+  var _useState87 = useState(false),
+    _useState88 = _slicedToArray(_useState87, 2),
+    loaded = _useState88[0],
+    setLoaded = _useState88[1];
+  var _useState89 = useState(false),
+    _useState90 = _slicedToArray(_useState89, 2),
+    moreOpen = _useState90[0],
+    setMoreOpen = _useState90[1];
+  var today = new Date().toISOString().slice(0, 10);
+  useEffect(function () {
+    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+      var v, t, tp, m, sh, sc, fl;
+      return _regenerator().w(function (_context2) {
+        while (1) switch (_context2.n) {
+          case 0:
+            _context2.n = 1;
+            return sLoad('a12:variant');
+          case 1:
+            v = _context2.v;
+            _context2.n = 2;
+            return sLoad('a12:trainings');
+          case 2:
+            t = _context2.v;
+            _context2.n = 3;
+            return sLoad('a12:templates');
+          case 3:
+            tp = _context2.v;
+            _context2.n = 4;
+            return sLoad('a12:mealPlan');
+          case 4:
+            m = _context2.v;
+            _context2.n = 5;
+            return sLoad('a12:shopList');
+          case 5:
+            sh = _context2.v;
+            _context2.n = 6;
+            return sLoad('a12:shareCode');
+          case 6:
+            sc = _context2.v;
+            _context2.n = 7;
+            return sLoad('deburter:foodlog');
+          case 7:
+            fl = _context2.v;
+            if (v) setVariant(v);
+            if (t) setTrainings(t);
+            if (tp) setTemplates(tp);
+            if (m) setMealPlan(m);
+            if (sh) setShoppingList(sh);
+            if (sc) setShareCode(sc);
+            if (fl) setFoodLog(fl);
+            setLoaded(true);
+          case 8:
+            return _context2.a(2);
+        }
+      }, _callee2);
+    }))();
+  }, []);
+  var saveT = function saveT(next) {
+    setTrainings(next);
+    sSave('a12:trainings', next);
+  };
+  var saveTpl = function saveTpl(next) {
+    setTemplates(next);
+    sSave('a12:templates', next);
+  };
+  var saveMP = function saveMP(next) {
+    setMealPlan(next);
+    sSave('a12:mealPlan', next);
+  };
+  var saveFL = function saveFL(next) {
+    setFoodLog(next);
+    sSave('deburter:foodlog', next);
+  };
+  var delT = function delT(key) {
+    var n = _objectSpread({}, trainings);
+    delete n[key];
+    saveT(n);
+  };
+  var saveEx = function saveEx(date, exs) {
+    return saveT(_objectSpread(_objectSpread({}, trainings), {}, _defineProperty({}, date, _objectSpread(_objectSpread({}, trainings[date] || {}), {}, {
+      exercises: exs
+    }))));
+  };
+  var goTab = function goTab(t) {
+    setTab(t);
+    setMoreOpen(false);
+  };
+  var buildShop = function buildShop() {
+    var agg = {};
+    mealPlan.forEach(function (_ref52) {
+      var recipeId = _ref52.recipeId,
+        portions = _ref52.portions;
+      var r = RECIPES.find(function (r) {
+        return r.id === recipeId;
+      });
+      if (!r) return;
+      var mult = portions / r.servings;
+      r.ingredients.forEach(function (ing) {
+        if (variant === 'lf' && ing.skipLf) return;
+        if (variant === 'lc' && ing.skipLc) return;
+        if (!agg[ing.name]) agg[ing.name] = {
+          qty: 0,
+          unit: ing.unit
+        };
+        if (typeof ing.qty === 'number') agg[ing.name].qty += ing.qty * mult;
+      });
+    });
+    var list = Object.entries(agg).map(function (_ref53) {
+      var _ref54 = _slicedToArray(_ref53, 2),
+        name = _ref54[0],
+        _ref54$ = _ref54[1],
+        qty = _ref54$.qty,
+        unit = _ref54$.unit;
+      return {
+        name: name,
+        qty: Math.ceil(qty * 10) / 10,
+        unit: unit
+      };
+    });
+    var code = Math.random().toString(36).slice(2, 8).toUpperCase();
+    setShoppingList(list);
+    sSave('a12:shopList', list);
+    setShareCode(code);
+    sSave('a12:shareCode', code);
+    goTab('nakup');
+  };
+  if (!loaded) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: C.bg,
+      fontFamily: F,
+      color: C.mt,
+      fontSize: 14
+    }
+  }, "Na\u010D\xEDt\xE1m\u2026");
+  var vl = VARIANT_LABELS[variant] || {
+    label: '?',
+    color: '#888'
+  };
+  var secondaryTabs = ['recepty', 'nakup', 'nastaveni'];
+  var isSecondary = secondaryTabs.includes(tab);
+  var navItems = [{
+    id: 'dashboard',
+    label: 'Přehled'
+  }, {
+    id: 'ukoly',
+    label: 'Úkoly'
+  }, {
+    id: 'denik',
+    label: 'Deník'
+  }, {
+    id: 'jidlo',
+    label: 'Jídlo'
+  }, {
+    id: 'more',
+    label: '···'
+  }];
+  var content;
+  switch (tab) {
+    case 'dashboard':
+      content = /*#__PURE__*/React.createElement(DashTab, {
+        today: today,
+        trainings: trainings,
+        variant: variant,
+        onGoTab: goTab
+      });
+      break;
+    case 'ukoly':
+      content = /*#__PURE__*/React.createElement(UkolyTab, {
+        today: today,
+        trainings: trainings,
+        onSave: function onSave(k, v) {
+          return saveT(_objectSpread(_objectSpread({}, trainings), {}, _defineProperty({}, k, v)));
+        },
+        onDelete: delT
+      });
+      break;
+    case 'denik':
+      content = /*#__PURE__*/React.createElement(DenikTab, {
+        today: today,
+        trainings: trainings,
+        templates: templates,
+        onSaveEx: saveEx,
+        onSaveTpl: saveTpl
+      });
+      break;
+    case 'jidlo':
+      content = /*#__PURE__*/React.createElement(JidloTab, {
+        today: today,
+        foodLog: foodLog,
+        onSave: saveFL
+      });
+      break;
+    case 'recepty':
+      content = /*#__PURE__*/React.createElement(ReceptyTab, {
+        mealPlan: mealPlan,
+        variant: variant,
+        onAdd: function onAdd(id, p) {
+          return saveMP([].concat(_toConsumableArray(mealPlan), [{
+            recipeId: id,
+            portions: p
+          }]));
+        },
+        onRemove: function onRemove(i) {
+          return saveMP(mealPlan.filter(function (_, j) {
+            return j !== i;
+          }));
+        },
+        onBuildList: buildShop,
+        onGoTab: goTab
+      });
+      break;
+    case 'nakup':
+      content = /*#__PURE__*/React.createElement(NakupTab, {
+        mealPlan: mealPlan,
+        shoppingList: shoppingList,
+        shareCode: shareCode,
+        variant: variant,
+        onBuild: buildShop,
+        onGoTab: goTab,
+        onRegen: function onRegen() {
+          setShoppingList(null);
+          sSave('a12:shopList', null);
+        }
+      });
+      break;
+    case 'nastaveni':
+      content = /*#__PURE__*/React.createElement(NastaveniTab, {
+        variant: variant,
+        onSetVariant: function onSetVariant(v) {
+          setVariant(v);
+          sSave('a12:variant', v);
+        },
+        onMigrateFromLocalStorage: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+          var t, tp, m, v, fl;
+          return _regenerator().w(function (_context3) {
+            while (1) switch (_context3.n) {
+              case 0:
+                _context3.n = 1;
+                return sLoad('a12:trainings');
+              case 1:
+                t = _context3.v;
+                if (t) setTrainings(t);
+                _context3.n = 2;
+                return sLoad('a12:templates');
+              case 2:
+                tp = _context3.v;
+                if (tp) setTemplates(tp);
+                _context3.n = 3;
+                return sLoad('a12:mealPlan');
+              case 3:
+                m = _context3.v;
+                if (m) setMealPlan(m);
+                _context3.n = 4;
+                return sLoad('a12:variant');
+              case 4:
+                v = _context3.v;
+                if (v) setVariant(v);
+                _context3.n = 5;
+                return sLoad('deburter:foodlog');
+              case 5:
+                fl = _context3.v;
+                if (fl) setFoodLog(fl);
+              case 6:
+                return _context3.a(2);
+            }
+          }, _callee3);
+        }))
+      });
+      break;
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: '100vh',
+      background: C.bg,
+      color: C.tx,
+      fontFamily: F,
+      fontSize: 15
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      borderBottom: '1px solid ' + C.dv,
+      padding: '0 16px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 600,
+      margin: '0 auto',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      height: 52
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontWeight: 800,
+      fontSize: 16,
+      letterSpacing: '0.04em',
+      fontFamily: F
+    }
+  }, "DEBU\u0158T\xC9R"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.dm,
+      fontSize: 11,
+      fontFamily: F
+    }
+  }, "/ A12")), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return goTab('nastaveni');
+    },
+    style: {
+      background: vl.color + '18',
+      border: '1px solid ' + vl.color + '55',
+      color: vl.color,
+      fontSize: 11,
+      fontWeight: 800,
+      padding: '4px 10px',
+      cursor: 'pointer',
+      fontFamily: F
+    }
+  }, vl.label))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 600,
+      margin: '0 auto',
+      padding: '0 16px 100px'
+    }
+  }, content), moreOpen && /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick() {
+      return setMoreOpen(false);
+    },
+    style: {
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.3)',
+      zIndex: 90
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick(e) {
+      return e.stopPropagation();
+    },
+    style: {
+      position: 'fixed',
+      bottom: 64,
+      left: 0,
+      right: 0,
+      background: C.bg,
+      borderTop: '1px solid ' + C.dv,
+      padding: '8px 0',
+      zIndex: 91
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 600,
+      margin: '0 auto'
+    }
+  }, [{
+    id: 'recepty',
+    label: 'Recepty & jídelní plán'
+  }, {
+    id: 'nakup',
+    label: 'Nákupní seznam'
+  }, {
+    id: 'nastaveni',
+    label: 'Nastavení'
+  }].map(function (item) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: item.id,
+      onClick: function onClick() {
+        return goTab(item.id);
+      },
+      style: {
+        display: 'block',
+        width: '100%',
+        background: tab === item.id ? C.ac1 : 'transparent',
+        border: 'none',
+        borderBottom: '1px solid ' + C.dv,
+        color: tab === item.id ? C.ac : C.tx,
+        padding: '14px 20px',
+        cursor: 'pointer',
+        fontSize: 14,
+        fontWeight: tab === item.id ? 800 : 400,
+        fontFamily: F,
+        textAlign: 'left'
+      }
+    }, item.label);
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      background: C.bg,
+      borderTop: '1px solid ' + C.dv,
+      zIndex: 100,
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 600,
+      margin: '0 auto',
+      display: 'flex'
+    }
+  }, navItems.map(function (item) {
+    var active = item.id === 'more' ? isSecondary || moreOpen : tab === item.id;
+    var onClick = item.id === 'more' ? function () {
+      return setMoreOpen(!moreOpen);
+    } : function () {
+      return goTab(item.id);
+    };
+    return /*#__PURE__*/React.createElement("button", {
+      key: item.id,
+      onClick: onClick,
+      style: {
+        flex: 1,
+        background: 'none',
+        border: 'none',
+        borderTop: active ? '2px solid ' + C.ac : '2px solid transparent',
+        color: active ? C.ac : C.mt,
+        fontWeight: active ? 800 : 400,
+        fontSize: 12,
+        fontFamily: F,
+        padding: '10px 0 8px',
+        cursor: 'pointer',
+        marginTop: -2,
+        letterSpacing: item.id === 'more' ? '0.15em' : 0
+      }
+    }, item.label);
+  }))));
+}
+window.__DeburterApp = App;
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(window.__DeburterApp));
+</script>
+</body>
+</html>
