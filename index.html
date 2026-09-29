@@ -45,7 +45,12 @@ input:focus-visible,textarea:focus-visible{outline-offset:-2px}
 <script>
 const { useState, useEffect } = React;
 // Světlý / tmavý režim podle systému (iOS)
-const DARK = !(typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches);
+const THEME_KEY = 'deburter:theme'; // 'auto' | 'dark' | 'light' (uloženo jen v tomto zařízení)
+let THEME_PREF = 'auto';
+try {
+  THEME_PREF = localStorage.getItem(THEME_KEY) || 'auto';
+} catch (e) {}
+const DARK = THEME_PREF === 'dark' ? true : THEME_PREF === 'light' ? false : !(typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches);
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const SPRINT_TABLE = {
@@ -3827,72 +3832,105 @@ function UkolyTab({
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       gap: 10,
-      marginBottom: 12
+      marginBottom: 14,
+      alignItems: 'end'
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: S.fieldLabel
-  }, "SPRINT TRÉNINK # ", /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...S.fieldLabel,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }
+  }, "TRÉNINK # ", /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 400
     }
   }, "· ", sprintCount, "/35 hotovo")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      alignItems: 'center',
-      gap: 6
+      alignItems: 'stretch',
+      height: 52,
+      background: C.sf2,
+      borderRadius: 12,
+      overflow: 'hidden'
     }
   }, /*#__PURE__*/React.createElement("button", {
+    "aria-label": "Číslo tréninku méně",
     onClick: () => numCh(Math.max(1, (parseInt(num) || 1) - 1)),
     style: {
-      background: C.sf2,
+      background: 'none',
       border: 'none',
-      color: C.tx,
-      width: 38,
-      height: 38,
+      color: C.tx2,
+      width: 44,
       flexShrink: 0,
       cursor: 'pointer',
-      fontSize: 18,
+      fontSize: 22,
       fontFamily: F,
-      borderRadius: 10
+      padding: 0
     }
   }, "−"), /*#__PURE__*/React.createElement("input", {
+    "aria-label": "Číslo sprint tréninku",
     type: "number",
+    inputMode: "numeric",
     value: num,
     min: "1",
     max: "35",
     onChange: e => numCh(parseInt(e.target.value) || 1),
     style: {
       ...inpS,
+      background: 'transparent',
+      borderRadius: 0,
+      padding: 0,
+      minWidth: 0,
+      flex: 1,
       textAlign: 'center',
       fontWeight: 700,
       fontSize: 20
     }
   }), /*#__PURE__*/React.createElement("button", {
+    "aria-label": "Číslo tréninku více",
     onClick: () => numCh(Math.min(35, (parseInt(num) || 1) + 1)),
     style: {
-      background: C.sf2,
+      background: 'none',
       border: 'none',
-      color: C.tx,
-      width: 38,
-      height: 38,
+      color: C.tx2,
+      width: 44,
       flexShrink: 0,
       cursor: 'pointer',
-      fontSize: 18,
+      fontSize: 22,
       fontFamily: F,
-      borderRadius: 10
+      padding: 0
     }
-  }, "+"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: S.fieldLabel
+  }, "+"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...S.fieldLabel,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }
   }, "SPRINTŮ ", /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 400
     }
   }, "· dle trenéra")), /*#__PURE__*/React.createElement("input", {
+    "aria-label": "Počet sprintů",
     type: "number",
+    inputMode: "numeric",
     value: sprints,
     onChange: e => setSprints(e.target.value),
     style: {
       ...inpS,
+      height: 52,
+      padding: 0,
       textAlign: 'center',
       fontWeight: 700,
       fontSize: 20,
@@ -5511,6 +5549,25 @@ function NastaveniTab({
     }
   }, "Nastavení"), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: S.secLabel
+  }, "Vzhled"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3,
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "Automaticky se řídí nastavením telefonu. Volba platí jen v tomto zařízení."), /*#__PURE__*/React.createElement(Seg, {
+    options: [['auto', 'Automaticky'], ['dark', 'Tmavý'], ['light', 'Světlý']],
+    value: THEME_PREF,
+    onChange: v => {
+      try {
+        localStorage.setItem(THEME_KEY, v);
+      } catch (e) {}
+      flushAll().then(() => location.reload());
+    }
+  })), {
+    marginBottom: 12
+  }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: S.secLabel
   }, "Výživová varianta"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.tx3,
@@ -5952,6 +6009,8 @@ function App() {
     try {
       document.body.style.background = C.bg;
       document.body.style.color = C.tx;
+      document.documentElement.style.background = C.bg;
+      document.documentElement.style.colorScheme = DARK ? 'dark' : 'light';
     } catch (e) {}
   }, []);
   useEffect(() => {
@@ -5979,7 +6038,7 @@ function App() {
     if (typeof matchMedia !== 'function') return;
     const mq = matchMedia('(prefers-color-scheme: light)');
     const h = () => {
-      flushAll().then(() => location.reload());
+      if (THEME_PREF === 'auto') flushAll().then(() => location.reload());
     };
     if (mq.addEventListener) mq.addEventListener('change', h);else if (mq.addListener) mq.addListener(h);
     return () => {
