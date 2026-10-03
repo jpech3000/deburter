@@ -92,6 +92,115 @@ const SPRINT_TABLE = {
 };
 const PROGRAM_START = "2026-09-07";
 const PROTEIN_GOAL = 160;
+
+// ── TYPY CVIKŮ ────────────────────────────────────────────────────────────────
+// bar  = osa / stroj, zapisuje se celková váha
+// db2  = dvě jednoručky najednou, zapisuje se váha JEDNÉ činky → „2× 20 kg × 10“
+// db1  = jedna jednoručka po stranách, váha jedné činky, opakování celkem za obě strany
+// reps = jen opakování (+ nepovinné nastavení, např. číslo díry v kleci)
+const EX_TYPES = [['bar', 'Osa'], ['db2', '2 činky'], ['db1', '1 činka'], ['reps', 'Opak.']];
+const exNorm = s => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const DEFAULT_EX_TYPES = {
+  'incline bench press': 'db2',
+  'military press db': 'db2',
+  'delt flys': 'db2',
+  'delt fly': 'db2',
+  'lateral raise': 'db2',
+  'single squat': 'db2',
+  'db row': 'db1',
+  'superman': 'reps'
+};
+// Starý zápis: tyto cviky se zapisovaly jako součet obou činek → při převodu ÷ 2
+const LEGACY_TOTAL = ['incline bench press', 'single squat'];
+let exTypeOverrides = {};
+const exTypeOf = name => exTypeOverrides[exNorm(name)] || DEFAULT_EX_TYPES[exNorm(name)] || 'bar';
+const volFactor = t => t === 'db2' ? 2 : t === 'reps' ? 0 : 1;
+const exVolume = ex => volFactor(exTypeOf(ex.name)) * (ex.sets || []).reduce((a, x) => a + (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0), 0);
+const kgTxt = (w, t) => (t === 'db2' ? '2× ' : '') + w;
+const setTxtT = (s, t) => {
+  const w = parseFloat(s.weight) || 0,
+    r = parseInt(s.reps) || 0;
+  return t === 'reps' || !(w > 0) ? r + ' op.' : kgTxt(w, t) + '×' + r;
+};
+const isLegacyEx = ex => !!ex && ex.v !== 2;
+const half = w => {
+  const n = parseFloat(String(w).replace(',', '.'));
+  return n > 0 ? String(Math.round(n / 2 * 100) / 100) : w;
+};
+// Převod jednoho cviku ze starého zápisu (nic se nemaže: číslo díry se přesune do „level“)
+function migrateExercise(ex) {
+  const n = exNorm(ex.name),
+    t = exTypeOf(ex.name);
+  let sets = ex.sets || [],
+    extra = {};
+  if (LEGACY_TOTAL.includes(n)) sets = sets.map(s => ({
+    ...s,
+    weight: half(s.weight)
+  }));
+  if (t === 'reps') {
+    const lv = sets.map(s => parseFloat(s.weight) || 0).find(w => w > 0);
+    if (lv && !ex.level) extra.level = String(lv);
+    sets = sets.map(s => (parseFloat(s.weight) || 0) > 0 ? {
+      ...s,
+      level: String(s.weight),
+      weight: ''
+    } : s);
+  }
+  return {
+    ...ex,
+    ...extra,
+    sets,
+    v: 2
+  };
+}
+function legacySummary(trainings) {
+  const g = {};
+  Object.entries(trainings || {}).forEach(([d, t]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+    (t.exercises || []).forEach(ex => {
+      if (!isLegacyEx(ex)) return;
+      const n = exNorm(ex.name);
+      const k = g[n] || (g[n] = {
+        name: (ex.name || '').trim(),
+        days: 0,
+        sets: 0,
+        samples: []
+      });
+      k.days++;
+      k.sets += (ex.sets || []).length;
+      const w = (ex.sets || []).map(s => parseFloat(s.weight) || 0).find(x => x > 0);
+      if (w && k.samples.length < 1) k.samples.push(w);
+    });
+  });
+  return Object.values(g);
+}
+function migrateTrainings(trainings) {
+  const next = {};
+  Object.entries(trainings || {}).forEach(([d, t]) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && t && Array.isArray(t.exercises)) next[d] = {
+      ...t,
+      exercises: t.exercises.map(ex => isLegacyEx(ex) ? migrateExercise(ex) : ex)
+    };else next[d] = t;
+  });
+  return next;
+}
+async function backupBeforeMigration(data) {
+  const w = await api('/app_state', {
+    method: 'POST',
+    headers: {
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify({
+      key: 'backup-pred-prevodem:' + new Date().toISOString(),
+      value: {
+        created: new Date().toISOString(),
+        data
+      },
+      updated_at: new Date().toISOString()
+    })
+  });
+  if (!w.ok) throw new Error('záloha ' + w.status);
+}
 // Tolerantní čtení čísla: "450", "450 kcal", "~450", "12,5 g" → číslo
 const numOf = v => {
   if (typeof v === 'number') return isFinite(v) ? v : 0;
@@ -1298,7 +1407,7 @@ const SB_BASE = 'https://infkvxltifdatugjudwt.supabase.co';
 const SB_URL = SB_BASE + '/rest/v1';
 const SB_KEY = 'sb_publishable_Zf2UBPHLnYe4ep2U2LTsVQ_5u8FxFJy';
 const SESSION_KEY = 'deburter:session';
-const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body'];
+const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body', 'a12:exTypes'];
 const BACKUP_KEEP = 30;
 class AuthError extends Error {}
 let session = null;
@@ -2562,12 +2671,18 @@ function ExCard({
   onUpdateSet,
   onRemoveSet,
   onRemove,
-  onRename
+  onRename,
+  onSetType,
+  onSetLevel
 }) {
+  const type = exTypeOf(ex.name);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [nm, setNm] = useState(ex.name);
-  const best = ex.sets.reduce((b, s) => {
+  const best = type === 'reps' ? {
+    w: 0,
+    r: ex.sets.reduce((m, s) => Math.max(m, parseInt(s.reps) || 0), 0)
+  } : ex.sets.reduce((b, s) => {
     const w = parseFloat(s.weight) || 0;
     return w > b.w ? {
       w,
@@ -2654,7 +2769,12 @@ function ExCard({
       color: C.tx2,
       fontSize: 13
     }
-  }, best.w, " kg × ", best.r), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
+  }, kgTxt(best.w, type), " kg × ", best.r), type === 'reps' && best.r > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx2,
+      fontSize: 13
+    }
+  }, best.r, " op.", ex.level ? ' · díra ' + ex.level : ''), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       background: C.ac1,
       color: C.ac,
@@ -2673,7 +2793,7 @@ function ExCard({
     style: {
       color: C.tx2
     }
-  }, prevBest.w > 0 ? `${prevBest.w} kg × ${prevBest.r}` : `${prevBest.r} op.`), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
+  }, prevBest.w > 0 && type !== 'reps' ? `${kgTxt(prevBest.w, type)} kg × ${prevBest.r}` : `${prevBest.r} op.`), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.tx3,
       fontSize: 13,
@@ -2726,7 +2846,54 @@ function ExCard({
     style: {
       padding: '0 16px 14px'
     }
-  }, prevSets.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, editing && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: S.fieldLabel
+  }, "TYP ZÁTĚŽE"), /*#__PURE__*/React.createElement(Seg, {
+    options: EX_TYPES,
+    value: type,
+    onChange: t => onSetType && onSetType(t)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3,
+      fontSize: 12,
+      marginTop: 6,
+      lineHeight: 1.35
+    }
+  }, "2 činky = zapisuješ váhu jedné činky. Platí pro všechny dny tohoto cviku, zapsaná čísla se nepřepočítají.")), type === 'reps' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...S.fieldLabel,
+      marginBottom: 0,
+      flex: 1
+    }
+  }, "NASTAVENÍ / DÍRA ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400
+    }
+  }, "· nepovinné")), /*#__PURE__*/React.createElement("input", {
+    value: ex.level || '',
+    onChange: e => onSetLevel && onSetLevel(e.target.value),
+    placeholder: "—",
+    type: "text",
+    inputMode: "numeric",
+    "aria-label": "Nastavení, číslo díry",
+    style: {
+      ...inpS,
+      width: 90,
+      textAlign: 'center',
+      padding: '9px 10px'
+    }
+  })), prevSets.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -2748,26 +2915,29 @@ function ExCard({
       padding: '4px 8px',
       borderRadius: 8
     }
-  }, setTxt(s)))), ex.sets.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, setTxtT(s, type)))), ex.sets.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
-      gridTemplateColumns: '24px 1fr 1fr 36px',
+      gridTemplateColumns: type === 'reps' ? '24px 1fr 36px' : '24px 1fr 1fr 36px',
       gap: 6,
       marginBottom: 6
     }
-  }, ['#', 'KG', 'REPS', ''].map((h, i) => /*#__PURE__*/React.createElement("div", {
+  }, (type === 'reps' ? ['#', 'OPAKOVÁNÍ', ''] : ['#', type === 'db2' ? 'KG · 1 ČINKA (2×)' : type === 'db1' ? 'KG · ČINKA' : 'KG', type === 'db1' ? 'REPS · OBĚ STRANY' : 'REPS', '']).map((h, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       color: C.tx3,
       fontSize: 12,
       fontWeight: 600,
-      fontFamily: F
+      fontFamily: F,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     }
   }, h))), ex.sets.map((s, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: 'grid',
-      gridTemplateColumns: '24px 1fr 1fr 36px',
+      gridTemplateColumns: type === 'reps' ? '24px 1fr 36px' : '24px 1fr 1fr 36px',
       gap: 6,
       marginBottom: 4,
       alignItems: 'center'
@@ -2779,13 +2949,17 @@ function ExCard({
       fontWeight: 700,
       fontFamily: F
     }
-  }, i + 1), /*#__PURE__*/React.createElement(Stepper, {
+  }, i + 1), type !== 'reps' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative'
+    }
+  }, /*#__PURE__*/React.createElement(Stepper, {
     value: s.weight,
     onChange: v => onUpdateSet(i, 'weight', v),
     step: c => c < 10 ? 1 : 2.5,
     check: s.check,
-    label: 'Váha, série ' + (i + 1)
-  }), /*#__PURE__*/React.createElement(Stepper, {
+    label: (type === 'db2' ? 'Váha jedné činky' : 'Váha') + ', série ' + (i + 1)
+  })), /*#__PURE__*/React.createElement(Stepper, {
     value: s.reps,
     onChange: v => onUpdateSet(i, 'reps', v),
     step: 1,
@@ -2827,7 +3001,8 @@ function ProgressDetail({
   name,
   entries
 }) {
-  const bw = entries.every(e => !(e.best > 0)); // cvik s vlastní vahou
+  const type = exTypeOf(name);
+  const bw = type === 'reps' || entries.every(e => !(e.best > 0)); // cvik s vlastní vahou
   const val = e => bw ? e.reps || 0 : e.best || 0;
   const unit = bw ? 'op.' : 'kg';
   const max = Math.max(1, ...entries.map(val));
@@ -2850,7 +3025,7 @@ function ProgressDetail({
       marginBottom: 6,
       fontFamily: F
     }
-  }, bw ? 'MAX. OPAKOVÁNÍ' : 'MAX. VÁHA (kg)'), /*#__PURE__*/React.createElement("div", {
+  }, bw ? 'MAX. OPAKOVÁNÍ' : type === 'db2' ? 'MAX. VÁHA JEDNÉ ČINKY (kg)' : 'MAX. VÁHA (kg)'), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'flex-end',
@@ -3189,9 +3364,9 @@ function DashTab({
     sprints = 0,
     sprintSessions = 0;
   Object.values(trainings).forEach(t => {
-    (t.exercises || []).forEach(ex => ex.sets.forEach(s => {
-      vol += (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
-    }));
+    (t.exercises || []).forEach(ex => {
+      vol += exVolume(isLegacyEx(ex) ? migrateExercise(ex) : ex);
+    });
     if (t.taskType === 'zhustovani' && t.zhustovani?.vzdalenost) km += parseFloat(t.zhustovani.vzdalenost) || 0;
     if (t.taskType === 'beh' && t.beh?.vzdalenost) km += parseFloat(t.beh.vzdalenost) || 0;
     if (t.taskType === 'sprinty') {
@@ -3216,7 +3391,9 @@ function DashTab({
     (t.exercises || []).forEach(ex => {
       const key = (ex.name || '').trim().toLowerCase();
       if (!key) return;
-      const w = ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
+      const t = exTypeOf(ex.name);
+      if (isLegacyEx(ex)) ex = migrateExercise(ex);
+      const w = t === 'reps' ? 0 : ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
       const r = ex.sets.reduce((b, s) => Math.max(b, parseInt(s.reps) || 0), 0);
       const p = pr[key] || (pr[key] = {
         name: ex.name.trim(),
@@ -3227,6 +3404,7 @@ function DashTab({
         prevR: null
       });
       p.name = ex.name.trim();
+      p.t = t;
       if (w > p.w) {
         p.prevW = p.w || null;
         p.w = w;
@@ -3706,7 +3884,7 @@ function DashTab({
         fontSize: 16,
         fontFamily: F
       }
-    }, p.w > 0 ? `${p.w} kg` : `${p.r} op.`)));
+    }, p.w > 0 ? `${kgTxt(p.w, p.t)} kg` : `${p.r} op.`)));
   }))), variant === '?' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.ac1,
@@ -4083,7 +4261,10 @@ function DenikTab({
   trainings,
   templates,
   onSaveEx,
-  onSaveTpl
+  onSaveTpl,
+  onSetExType,
+  legacyCount,
+  onOpenMigration
 }) {
   const [selDate, setSelDate] = useState(today);
   const [view, setView] = useState('log');
@@ -4112,7 +4293,7 @@ function DenikTab({
       const ex = (trainings[d].exercises || []).find(e => norm(e.name) === n && e.sets.some(s => (parseFloat(s.weight) || 0) > 0 || (parseInt(s.reps) || 0) > 0));
       if (ex) return {
         date: d,
-        sets: ex.sets
+        sets: (isLegacyEx(ex) ? migrateExercise(ex) : ex).sets
       };
     }
     return null;
@@ -4123,7 +4304,8 @@ function DenikTab({
     onSaveEx(selDate, [...exercises, {
       id: Date.now() + '',
       name: newEx.trim(),
-      sets: []
+      sets: [],
+      v: 2
     }]);
     setNewEx('');
   };
@@ -4132,7 +4314,8 @@ function DenikTab({
     onSaveEx(selDate, [...exercises, ...tpl.exercises.filter(e => !ex.has(e)).map(e => ({
       id: Date.now() + Math.random() + '',
       name: e,
-      sets: []
+      sets: [],
+      v: 2
     }))]);
   };
   // Nová série se předvyplní poslední sérií, jinak první sérií z minulého tréninku
@@ -4142,7 +4325,7 @@ function DenikTab({
     const p = !lastCur ? prevFor(e.name) : null;
     const src = lastCur || p && (p.sets[0] || null);
     const ns = src ? {
-      weight: String(src.weight ?? ''),
+      weight: exTypeOf(e.name) === 'reps' ? '' : String(src.weight ?? ''),
       reps: String(src.reps ?? '')
     } : {
       weight: '',
@@ -4193,9 +4376,21 @@ function DenikTab({
         reps: String(x.reps ?? x.r ?? ''),
         check: !!(x.check || x.uncertain)
       });
+      const name = known[norm(raw)] || raw;
+      let level = e.level != null && e.level !== '' ? String(e.level) : '';
+      let sets2 = sets;
+      if (exTypeOf(name) === 'reps') sets2 = sets.map(x => {
+        const w = parseFloat(x.weight) || 0;
+        if (w > 0 && !level) level = String(w);
+        return {
+          ...x,
+          weight: ''
+        };
+      });
       return {
-        name: known[norm(raw)] || raw,
-        sets
+        name,
+        sets: sets2,
+        level
       };
     }).filter(e => e.name && e.sets.length);
     if (!exercises.length) throw new Error('V JSONu chybí série');
@@ -4256,13 +4451,20 @@ function DenikTab({
         reps: x.reps
       });
       const i = next.findIndex(e => norm(e.name) === norm(ie.name));
+      const lv = ie.level ? {
+        level: ie.level
+      } : {};
       if (i >= 0) next[i] = {
         ...next[i],
-        sets
+        ...lv,
+        sets,
+        v: 2
       };else next.push({
         id: Date.now() + Math.random() + '',
         name: ie.name,
-        sets
+        sets,
+        ...lv,
+        v: 2
       });
     });
     onSaveEx(date, next);
@@ -4288,10 +4490,11 @@ function DenikTab({
       const nm = (ex.name || '').trim();
       if (!nm) return;
       if (!allProg[nm]) allProg[nm] = [];
-      const best = ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
+      if (isLegacyEx(ex)) ex = migrateExercise(ex);
+      const best = exTypeOf(nm) === 'reps' ? 0 : ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
       const reps = ex.sets.reduce((b, s) => Math.max(b, parseInt(s.reps) || 0), 0);
       const totReps = ex.sets.reduce((b, s) => b + (parseInt(s.reps) || 0), 0);
-      const vol = ex.sets.reduce((s, set) => s + (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0), 0);
+      const vol = Math.round(exVolume(ex));
       if (best > 0 || reps > 0) allProg[nm].push({
         date,
         best,
@@ -4373,7 +4576,49 @@ function DenikTab({
       fontSize: 14,
       fontWeight: 600
     }
-  }, "✓ ", dFlash), /*#__PURE__*/React.createElement(Btn, {
+  }, "✓ ", dFlash), legacyCount > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: onOpenMigration,
+    style: {
+      width: '100%',
+      textAlign: 'left',
+      background: C.ac1,
+      border: 'none',
+      borderRadius: 12,
+      padding: '12px 14px',
+      marginBottom: 12,
+      cursor: 'pointer',
+      fontFamily: F,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      color: C.ac,
+      fontWeight: 600,
+      fontSize: 15
+    }
+  }, "Sjednotit zápis činek"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      color: C.tx2,
+      fontSize: 13,
+      marginTop: 2
+    }
+  }, "Starší záznamy (", legacyCount, " cviků) čekají na převod na „2× kg“. Zobrazit náhled.")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.ac
+    }
+  }, /*#__PURE__*/React.createElement(Ico, {
+    name: "chev",
+    size: 16,
+    sw: 2.4
+  }))), /*#__PURE__*/React.createElement(Btn, {
     ghost: true,
     full: true,
     onClick: startImport,
@@ -4502,12 +4747,12 @@ function DenikTab({
         style: {
           background: C.sf2,
           color: x.check ? C.ac : C.tx2,
-          border: x.check ? '1px solid ' + C.ac : 'none',
+          boxShadow: x.check ? 'inset 0 0 0 1px ' + C.ac : 'none',
           fontSize: 13,
           padding: '4px 8px',
           borderRadius: 8
         }
-      }, setTxt(x), x.check ? ' ?' : ''))));
+      }, setTxtT(x, exTypeOf(e.name)), x.check ? ' ?' : ''))));
     })), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
@@ -4559,7 +4804,12 @@ function DenikTab({
     onUpdateSet: (si, f, v) => updSet(ex.id, si, f, v),
     onRemoveSet: si => rmSet(ex.id, si),
     onRemove: () => setExDel(ex),
-    onRename: nm => renEx(ex.id, nm)
+    onRename: nm => renEx(ex.id, nm),
+    onSetType: t => onSetExType && onSetExType(ex.name, t),
+    onSetLevel: v => onSaveEx(selDate, exercises.map(e => e.id === ex.id ? {
+      ...e,
+      level: v
+    } : e))
   })), exDel && /*#__PURE__*/React.createElement(ActionSheet, {
     title: 'Smazat cvik ' + exDel.name + '?',
     message: exDel.sets.length + ' sérií ze dne ' + fmtD(selDate) + ' bude trvale smazáno.',
@@ -5510,7 +5760,9 @@ function NastaveniTab({
   email,
   onLogout,
   currentData,
-  onRestored
+  onRestored,
+  legacyCount,
+  onOpenMigration
 }) {
   const [backups, setBackups] = useState(null);
   const [bErr, setBErr] = useState('');
@@ -5537,7 +5789,7 @@ function NastaveniTab({
     }
     setBusy(false);
   };
-  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : 'Před obnovou ' + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
+  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : (k.startsWith('backup-pred-prevodem') ? 'Před převodem činek ' : 'Před obnovou ') + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 34,
@@ -5579,6 +5831,20 @@ function NastaveniTab({
     value: variant,
     onChange: onSetVariant
   })), {
+    marginBottom: 12
+  }), legacyCount > 0 && cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: S.secLabel
+  }, "Zápis činek"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.5,
+      marginBottom: 12
+    }
+  }, "Starší záznamy (", legacyCount, " cviků) jsou ve starém zápisu. Převod sjednotí váhu na jednu činku („2× 20 kg × 10“). Před převodem se uloží záloha."), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: onOpenMigration
+  }, "Zobrazit náhled převodu")), {
     marginBottom: 12
   }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: S.secLabel
@@ -5747,6 +6013,139 @@ function NastaveniTab({
   }, "· Kuřecí prsa 150g → ~33g"), /*#__PURE__*/React.createElement("div", null, "· Tvaroh 200g → ~28g · Skyr 250g → ~27g"), /*#__PURE__*/React.createElement("div", null, "· Treska 200g → ~40g · Vejce 3ks+2bílky → ~26g")))));
 }
 
+// ── PŘEVOD ZÁPISU ČINEK ───────────────────────────────────────────────────────
+function MigrationSheet({
+  trainings,
+  currentData,
+  onApply,
+  onClose
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const groups = legacySummary(trainings);
+  const nf = n => String(Math.round(n * 100) / 100).replace('.', ',');
+  const describe = g => {
+    const n = exNorm(g.name),
+      t = exTypeOf(g.name);
+    if (LEGACY_TOTAL.includes(n)) return {
+      chg: true,
+      txt: g.samples[0] ? 'Součet → jedna činka, např. ' + nf(g.samples[0]) + ' → 2× ' + nf(g.samples[0] / 2) + ' kg' : 'Součet → jedna činka (÷ 2)'
+    };
+    if (t === 'reps') return {
+      chg: true,
+      txt: g.samples[0] ? 'Číslo ' + nf(g.samples[0]) + ' se přesune do „díra“, zůstanou opakování' : 'Jen opakování'
+    };
+    if (t === 'db2') return {
+      chg: false,
+      txt: 'Čísla beze změny, zobrazí se jako 2× kg'
+    };
+    if (t === 'db1') return {
+      chg: false,
+      txt: 'Beze změny (opakování celkem za obě strany)'
+    };
+    return {
+      chg: false,
+      txt: 'Beze změny'
+    };
+  };
+  const rows = groups.map(g => ({
+    ...g,
+    ...describe(g)
+  })).sort((a, b) => b.chg - a.chg || a.name.localeCompare(b.name));
+  const apply = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      await flushAll();
+      await backupBeforeMigration(currentData);
+      onApply(migrateTrainings(trainings));
+    } catch (e) {
+      setErr('Záloha se nepodařila, nic jsem nepřevedl. Zkus to znovu. (' + (e.message || e) + ')');
+      setBusy(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement(Modal, {
+    onClose: () => !busy && onClose()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 20,
+      fontFamily: F,
+      marginBottom: 6
+    }
+  }, "Sjednotit zápis činek"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.45,
+      marginBottom: 14
+    }
+  }, "U cviků se dvěma činkami se bude zapisovat váha jedné činky a zobrazí se „2× 20 kg × 10“. Nic se nesmaže. Před převodem se uloží záloha, kterou jde v Nastavení obnovit."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf2,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 14
+    }
+  }, rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: r.name,
+    style: {
+      padding: '11px 14px',
+      borderTop: i ? '0.5px solid ' + C.hair : 'none'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: 8,
+      alignItems: 'baseline'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 15,
+      color: r.chg ? C.tx : C.tx2
+    }
+  }, r.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3,
+      fontSize: 12,
+      flexShrink: 0
+    }
+  }, r.days, "× · ", r.sets, " sérií")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: r.chg ? C.ac : C.tx3,
+      fontSize: 13,
+      marginTop: 2
+    }
+  }, r.txt)))), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.er,
+      fontSize: 14,
+      marginBottom: 10
+    }
+  }, err), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    dis: busy,
+    style: {
+      flex: 1
+    },
+    onClick: apply
+  }, busy ? 'Ukládám zálohu…' : 'Převést'), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    disabled: busy,
+    style: {
+      ...S.secBtn,
+      flex: 1,
+      minHeight: 50
+    }
+  }, "Teď ne")));
+}
+
 // ── PŘIHLÁŠENÍ ────────────────────────────────────────────────────────────────
 function LoginScreen({
   onDone
@@ -5893,6 +6292,8 @@ function App() {
   const [shoppingList, setShoppingList] = useState(null);
   const [foodLog, setFoodLog] = useState([]);
   const [body, setBody] = useState([]);
+  const [exTypes, setExTypes] = useState({});
+  const [migOpen, setMigOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pull, setPull] = useState(0);
@@ -5921,7 +6322,11 @@ function App() {
     'a12:mealPlan': v => setMealPlan(v || []),
     'a12:shopList': v => setShoppingList(v || null),
     'deburter:foodlog': v => setFoodLog(v || []),
-    'a12:body': v => setBody(v || [])
+    'a12:body': v => setBody(v || []),
+    'a12:exTypes': v => {
+      exTypeOverrides = v && typeof v === 'object' ? v : {};
+      setExTypes(exTypeOverrides);
+    }
   };
   const applyData = d => DATA_KEYS.forEach(k => setters[k](d[k]));
   const showToast = t => {
@@ -6260,7 +6665,23 @@ function App() {
     'a12:mealPlan': mealPlan,
     'a12:shopList': shoppingList,
     'deburter:foodlog': foodLog,
-    'a12:body': body
+    'a12:body': body,
+    'a12:exTypes': exTypes
+  };
+  const setExType = (name, t) => {
+    const next = {
+      ...exTypes,
+      [exNorm(name)]: t
+    };
+    exTypeOverrides = next;
+    setExTypes(next);
+    sSave('a12:exTypes', next);
+  };
+  const legacyCount = Object.entries(trainings).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k)).reduce((n, [, t]) => n + (t.exercises || []).filter(isLegacyEx).length, 0);
+  const applyMigration = next => {
+    saveT(next);
+    setMigOpen(false);
+    showToast('Hotovo — záznamy činek jsou sjednocené. Záloha je v Nastavení.');
   };
   const buildShop = () => {
     const agg = {};
@@ -6344,7 +6765,10 @@ function App() {
         trainings: trainings,
         templates: templates,
         onSaveEx: saveEx,
-        onSaveTpl: saveTpl
+        onSaveTpl: saveTpl,
+        onSetExType: setExType,
+        legacyCount: legacyCount,
+        onOpenMigration: () => setMigOpen(true)
       });
       break;
     case 'jidlo':
@@ -6383,6 +6807,8 @@ function App() {
     case 'nastaveni':
       content = /*#__PURE__*/React.createElement(NastaveniTab, {
         variant: variant,
+        legacyCount: legacyCount,
+        onOpenMigration: () => setMigOpen(true),
         onSetVariant: v => {
           setVariant(v);
           sSave('a12:variant', v);
@@ -6599,7 +7025,12 @@ function App() {
       lineHeight: 1.4,
       boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
     }
-  }, toast)), /*#__PURE__*/React.createElement("div", {
+  }, toast)), migOpen && /*#__PURE__*/React.createElement(MigrationSheet, {
+    trainings: trainings,
+    currentData: currentData,
+    onApply: applyMigration,
+    onClose: () => setMigOpen(false)
+  }), /*#__PURE__*/React.createElement("div", {
     key: tab,
     className: "fade-in",
     style: {
