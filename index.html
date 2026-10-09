@@ -184,6 +184,432 @@ function migrateTrainings(trainings) {
   });
   return next;
 }
+// ── ANALÝZA (jen výpočty — nic nezapisuje) ─────────────────────────────────────
+const isDayKey = k => /^\d{4}-\d{2}-\d{2}$/.test(k);
+const parseD = ds => {
+  const [y, m, d] = String(ds).slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+const addDays = (d, n) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+const daysBetween = (a, b) => Math.round((parseD(b) - parseD(a)) / 864e5);
+const e1rm = (w, r) => w > 0 && r > 0 ? r === 1 ? w : w * (1 + r / 30) : 0; // Epley
+const r1 = n => Math.round(n * 10) / 10;
+const nf1 = n => String(r1(n)).replace('.', ',');
+const tFmt = kg => kg >= 1000 ? nf1(kg / 1000) + ' t' : Math.round(kg) + ' kg';
+const GROUPS = {
+  chest: 'Hrudník & záda',
+  shoulders: 'Ramena & paže',
+  legs: 'Nohy',
+  other: 'Ostatní'
+};
+const GROUP_ORDER = ['chest', 'shoulders', 'legs', 'other'];
+const dayGroup = ds => {
+  const g = parseD(ds).getDay();
+  return g === 1 || g === 4 ? 'chest' : g === 2 || g === 5 ? 'shoulders' : g === 3 ? 'legs' : 'other';
+};
+const weekOf = ds => Math.floor(daysBetween(PROGRAM_START, ds) / 7) + 1; // < 1 = před programem
+const weekStartD = n => addDays(parseD(PROGRAM_START), (n - 1) * 7);
+// Podobné názvy (Dead lift = Deadlift, RDL = Romanian deadlift, Dřep = Squat…)
+const compactKey = s => exNorm(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+const ALIASES = [['romaniandeadlift', 'rdl', 'rumunskymrtvytah'], ['squat', 'drep'], ['deadlift', 'mrtvytah'], ['benchpress', 'bench'], ['militarypressdb', 'rotacnitlak', 'militarypressrotacnitlak'], ['lateralraise', 'lateral', 'lateralr'], ['deltflys', 'deltfly'], ['bicepscurl', 'bicepsovyzdvih', 'biceps']];
+const simKey = s => {
+  const c = compactKey(s);
+  const g = ALIASES.find(a => a.includes(c));
+  return g ? g[0] : c;
+};
+
+// Tréninky po cvicích: každý trénink = nejlepší série, odhad 1RM, objem, MAX série…
+function buildSessions(trainings) {
+  const by = {};
+  Object.keys(trainings || {}).filter(isDayKey).sort().forEach(date => {
+    ((trainings[date] || {}).exercises || []).forEach(raw => {
+      const name = (raw && raw.name || '').trim();
+      if (!name) return;
+      const ex = isLegacyEx(raw) ? migrateExercise(raw) : raw;
+      const t = exTypeOf(name);
+      const sets = (ex.sets || []).map(x => ({
+        w: t === 'reps' ? 0 : parseFloat(x.weight) || 0,
+        r: parseInt(x.reps) || 0
+      })).filter(x => x.w > 0 || x.r > 0);
+      if (!sets.length) return;
+      const k = exNorm(name);
+      const o = by[k] || (by[k] = {
+        key: k,
+        name,
+        type: t,
+        sessions: []
+      });
+      o.name = name;
+      o.type = t;
+      let bestW = 0,
+        bestWR = 0,
+        best1 = 0,
+        best1S = null;
+      sets.forEach(x => {
+        if (x.w > bestW || x.w === bestW && x.r > bestWR) {
+          bestW = x.w;
+          bestWR = x.r;
+        }
+        const e = e1rm(x.w, x.r);
+        if (e > best1) {
+          best1 = e;
+          best1S = x;
+        }
+      });
+      o.sessions.push({
+        date,
+        bestW,
+        bestWR,
+        e1rm: best1,
+        e1rmSet: best1S,
+        vol: exVolume({
+          ...ex,
+          name
+        }),
+        maxReps: sets[sets.length - 1].r,
+        topReps: Math.max(...sets.map(x => x.r)),
+        totReps: sets.reduce((a, x) => a + x.r, 0),
+        nSets: sets.length,
+        group: dayGroup(date),
+        level: ex.level || ''
+      });
+    });
+  });
+  Object.values(by).forEach(o => {
+    const c = {};
+    o.sessions.forEach(x => {
+      c[x.group] = (c[x.group] || 0) + 1;
+    });
+    o.group = Object.keys(c).sort((a, b) => c[b] - c[a] || GROUP_ORDER.indexOf(a) - GROUP_ORDER.indexOf(b))[0] || 'other';
+  });
+  return by;
+}
+const strengthOf = o => o.type === 'reps' ? x => x.topReps : x => x.e1rm;
+// 3 poslední tréninky bez zlepšení oproti dřívějšímu maximu (jen aktivní cviky)
+function stagnation(o, today) {
+  const ss = o.sessions;
+  if (ss.length < 4) return null;
+  if (daysBetween(ss[ss.length - 1].date, today) > 21) return null;
+  const m = strengthOf(o);
+  const before = Math.max(...ss.slice(0, -3).map(m));
+  return ss.slice(-3).every(x => m(x) <= before + 1e-9) ? {
+    since: ss[ss.length - 3].date,
+    best: before
+  } : null;
+}
+function findDuplicates(list) {
+  const g = {};
+  list.forEach(o => {
+    const k = simKey(o.name);
+    (g[k] = g[k] || []).push(o);
+  });
+  return Object.values(g).filter(a => a.length > 1).map(a => [...a].sort((x, y) => y.sessions.length - x.sessions.length));
+}
+function weeklyStats(trainings, foodLog, body, by) {
+  const weeks = {};
+  const W = n => weeks[n] || (weeks[n] = {
+    n,
+    days: 0,
+    vol: 0,
+    volG: {
+      chest: 0,
+      shoulders: 0,
+      legs: 0,
+      other: 0
+    },
+    sprints: 0,
+    km: 0,
+    prs: 0,
+    prNames: [],
+    foodDays: 0,
+    protSum: 0,
+    prot160: 0,
+    kcalSum: 0,
+    kcalDays: 0,
+    problem: 0,
+    cheat: 0,
+    bw: []
+  });
+  Object.keys(trainings || {}).forEach(k => {
+    const t = trainings[k];
+    const date = k.slice(0, 10);
+    if (!t || !isDayKey(date)) return;
+    const n = weekOf(date);
+    if (n < 1) return;
+    if (isDayKey(k)) {
+      const exs = (t.exercises || []).filter(e => (e.sets || []).some(x => (parseFloat(x.weight) || 0) > 0 || (parseInt(x.reps) || 0) > 0));
+      if (!exs.length) return;
+      const w = W(n);
+      w.days++;
+      exs.forEach(raw => {
+        const v = exVolume(isLegacyEx(raw) ? migrateExercise(raw) : raw);
+        w.vol += v;
+        w.volG[dayGroup(date)] += v;
+      });
+    } else {
+      if (t.taskType === 'sprinty') W(n).sprints++;
+      const km = t.taskType === 'beh' ? parseFloat(t.beh && t.beh.vzdalenost) : t.taskType === 'zhustovani' ? parseFloat(t.zhustovani && t.zhustovani.vzdalenost) : 0;
+      if (km > 0) W(n).km += km;
+    }
+  });
+  Object.values(by || {}).forEach(o => {
+    let mx = 0;
+    const m = strengthOf(o);
+    o.sessions.forEach(x => {
+      const v = m(x);
+      if (mx > 0 && v > mx + 1e-9) {
+        const n = weekOf(x.date);
+        if (n >= 1) {
+          W(n).prs++;
+          W(n).prNames.push(o.name);
+        }
+      }
+      if (v > mx) mx = v;
+    });
+  });
+  const perDay = {};
+  (foodLog || []).forEach(e => {
+    if (!e || !isDayKey(String(e.date || ''))) return;
+    const d = perDay[e.date] || (perDay[e.date] = {
+      p: 0,
+      k: 0
+    });
+    d.p += parseFloat(e.protein) || 0;
+    d.k += kcalOf(e);
+    const n = weekOf(e.date);
+    if (n >= 1) {
+      if (e.status === 'problem') W(n).problem++;
+      if (e.status === 'cheat') W(n).cheat++;
+    }
+  });
+  Object.entries(perDay).forEach(([d, v]) => {
+    const n = weekOf(d);
+    if (n < 1) return;
+    const w = W(n);
+    w.foodDays++;
+    w.protSum += v.p;
+    if (v.p >= PROTEIN_GOAL) w.prot160++;
+    if (v.k > 0) {
+      w.kcalSum += v.k;
+      w.kcalDays++;
+    }
+  });
+  (body || []).forEach(m => {
+    const bw = m && parseFloat(m.weight);
+    if (bw > 0 && isDayKey(String(m.date || ''))) {
+      const n = weekOf(m.date);
+      if (n >= 1) W(n).bw.push(bw);
+    }
+  });
+  return weeks;
+}
+const avgOf = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+// Hmotnost + klouzavý 7denní průměr
+function bodySeries(body) {
+  const pts = (body || []).filter(m => m && isDayKey(String(m.date || '')) && parseFloat(m.weight) > 0).map(m => ({
+    x: m.date,
+    y: parseFloat(m.weight)
+  })).sort((a, b) => a.x.localeCompare(b.x));
+  return pts.map(p => {
+    const from = ymd(addDays(parseD(p.x), -6));
+    const win = pts.filter(q => q.x >= from && q.x <= p.x);
+    return {
+      x: p.x,
+      y: p.y,
+      avg: avgOf(win.map(q => q.y))
+    };
+  });
+}
+function bodyWeightAt(body, date) {
+  const s = bodySeries(body);
+  if (!s.length) return null;
+  const before = s.filter(p => p.x <= date);
+  return (before.length ? before[before.length - 1] : s[0]).y;
+}
+
+// ── SLOUČENÍ CVIKŮ (přepisuje data → vždy náhled + záloha) ────────────────────
+function mergePreview(trainings, templates, src, dst) {
+  const s = exNorm(src),
+    d = exNorm(dst);
+  let days = 0,
+    sets = 0,
+    both = 0;
+  Object.entries(trainings || {}).forEach(([k, t]) => {
+    if (!isDayKey(k) || !t) return;
+    const exs = t.exercises || [];
+    const se = exs.filter(e => exNorm(e.name) === s);
+    if (!se.length) return;
+    days++;
+    sets += se.reduce((a, e) => a + (e.sets || []).length, 0);
+    if (exs.some(e => exNorm(e.name) === d)) both++;
+  });
+  const tpl = (templates || []).filter(t => (t.exercises || []).some(n => exNorm(n) === s)).length;
+  return {
+    days,
+    sets,
+    both,
+    tpl
+  };
+}
+function mergeTrainings(trainings, src, dst) {
+  const s = exNorm(src),
+    d = exNorm(dst),
+    dstName = String(dst).trim(),
+    next = {};
+  Object.entries(trainings || {}).forEach(([k, t]) => {
+    if (!isDayKey(k) || !t || !Array.isArray(t.exercises) || !t.exercises.some(e => exNorm(e.name) === s)) {
+      next[k] = t;
+      return;
+    }
+    let exs = t.exercises.map(e => (exNorm(e.name) === s || exNorm(e.name) === d) && isLegacyEx(e) ? migrateExercise(e) : e);
+    const di = exs.findIndex(e => exNorm(e.name) === d);
+    const srcs = exs.filter(e => exNorm(e.name) === s);
+    if (di >= 0) {
+      const target = exs[di];
+      const merged = {
+        ...target,
+        sets: [...(target.sets || []), ...srcs.flatMap(e => e.sets || [])]
+      };
+      if (!merged.level) {
+        const lv = srcs.find(e => e.level);
+        if (lv) merged.level = lv.level;
+      }
+      exs = exs.map((e, i) => i === di ? merged : e).filter(e => exNorm(e.name) !== s);
+    } else {
+      exs = exs.map(e => exNorm(e.name) === s ? {
+        ...e,
+        name: dstName
+      } : e);
+    }
+    next[k] = {
+      ...t,
+      exercises: exs
+    };
+  });
+  return next;
+}
+function mergeTemplates(templates, src, dst) {
+  const s = exNorm(src);
+  return (templates || []).map(t => {
+    if (!(t.exercises || []).some(n => exNorm(n) === s)) return t;
+    const seen = new Set(),
+      list = [];
+    t.exercises.map(n => exNorm(n) === s ? String(dst).trim() : n).forEach(n => {
+      if (!seen.has(exNorm(n))) {
+        seen.add(exNorm(n));
+        list.push(n);
+      }
+    });
+    return {
+      ...t,
+      exercises: list
+    };
+  });
+}
+async function backupNamed(prefix, data) {
+  const w = await api('/app_state', {
+    method: 'POST',
+    headers: {
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify({
+      key: prefix + ':' + new Date().toISOString(),
+      value: {
+        created: new Date().toISOString(),
+        data
+      },
+      updated_at: new Date().toISOString()
+    })
+  });
+  if (!w.ok) throw new Error('záloha ' + w.status);
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function weeklyMarkdown(data, todayStr) {
+  const tr = data['a12:trainings'] || {},
+    fl = data['deburter:foodlog'] || [],
+    bd = data['a12:body'] || [];
+  const by = buildSessions(tr),
+    weeks = weeklyStats(tr, fl, bd, by);
+  const f = d => d.getDate() + '. ' + (d.getMonth() + 1) + '.';
+  const L = ['# Debuřtér — souhrn A12', '', 'Export ' + todayStr + ' · start programu ' + PROGRAM_START, ''];
+  Object.keys(weeks).map(Number).sort((a, b) => b - a).forEach(n => {
+    const w = weeks[n],
+      st = weekStartD(n);
+    L.push('## W' + n + ' (' + f(st) + ' – ' + f(addDays(st, 6)) + st.getFullYear() + ')');
+    L.push('- Silové tréninky: ' + w.days);
+    L.push('- Objem: ' + tFmt(w.vol) + ' (' + GROUP_ORDER.filter(g => w.volG[g] > 0).map(g => GROUPS[g] + ' ' + tFmt(w.volG[g])).join(' · ') + ')');
+    if (w.prs) L.push('- Nové rekordy: ' + w.prs + ' — ' + [...new Set(w.prNames)].join(', '));
+    if (w.sprints || w.km) L.push('- Kondička: ' + w.sprints + '× sprinty' + (w.km ? ' · ' + nf1(w.km) + ' km' : ''));
+    if (w.foodDays) L.push('- Bílkoviny: Ø ' + Math.round(w.protSum / w.foodDays) + ' g · ' + w.prot160 + '/' + w.foodDays + ' dní ≥ ' + PROTEIN_GOAL + ' g' + (w.kcalDays ? ' · Ø ' + Math.round(w.kcalSum / w.kcalDays) + ' kcal' : '') + (w.problem || w.cheat ? ' · problém ' + w.problem + ' / cheat ' + w.cheat : ''));
+    if (w.bw.length) L.push('- Hmotnost: Ø ' + nf1(avgOf(w.bw)) + ' kg');
+    L.push('');
+  });
+  const rows = Object.values(by).filter(o => o.sessions.length).sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group) || a.name.localeCompare(b.name));
+  if (rows.length) {
+    L.push('## Aktuální síla', '', '| Cvik | Poslední | Odhad 1RM | Od startu |', '|---|---|---|---|');
+    rows.forEach(o => {
+      const a = o.sessions[0],
+        z = o.sessions[o.sessions.length - 1];
+      if (o.type === 'reps') {
+        L.push('| ' + o.name + ' | ' + z.topReps + ' op. | — | ' + (z.topReps - a.topReps >= 0 ? '+' : '') + (z.topReps - a.topReps) + ' op. |');
+        return;
+      }
+      const pct = a.e1rm > 0 ? Math.round((z.e1rm / a.e1rm - 1) * 100) : 0;
+      L.push('| ' + o.name + ' | ' + kgTxt(nf1(z.bestW), o.type) + ' kg × ' + z.bestWR + ' | ' + nf1(z.e1rm) + ' kg | ' + (pct >= 0 ? '+' : '') + pct + ' % |');
+    });
+    L.push('');
+  }
+  return L.join('\n');
+}
+function setsCSV(trainings) {
+  const L = ['datum;tyden;cvik;typ;serie;vaha_kg;opakovani;odhad_1rm_kg;dira'];
+  const c = v => String(v).replace('.', ',');
+  Object.keys(trainings || {}).filter(isDayKey).sort().forEach(d => ((trainings[d] || {}).exercises || []).forEach(raw => {
+    const ex = isLegacyEx(raw) ? migrateExercise(raw) : raw;
+    const t = exTypeOf(ex.name);
+    (ex.sets || []).forEach((x, i) => {
+      const w = t === 'reps' ? 0 : parseFloat(x.weight) || 0,
+        r = parseInt(x.reps) || 0;
+      L.push([d, weekOf(d), '"' + String(ex.name || '').replace(/"/g, '""') + '"', t, i + 1, w ? c(w) : '', r || '', w && r ? c(r1(e1rm(w, r))) : '', x.level || ex.level || ''].join(';'));
+    });
+  }));
+  return '﻿' + L.join('\r\n');
+}
+async function shareOrDownload(name, text, mime) {
+  try {
+    const file = new File([text], name, {
+      type: mime
+    });
+    if (navigator.canShare && navigator.canShare({
+      files: [file]
+    })) {
+      await navigator.share({
+        files: [file],
+        title: name
+      });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  const url = URL.createObjectURL(new Blob([text], {
+    type: mime
+  }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 1000);
+}
 async function backupBeforeMigration(data) {
   const w = await api('/app_state', {
     method: 'POST',
@@ -3352,6 +3778,16 @@ function DashTab({
   variant,
   onSaveBody
 }) {
+  const aBy = buildSessions(trainings);
+  const aWeeks = weeklyStats(trainings, foodLog, body, aBy);
+  const curW = Math.max(1, weekOf(today));
+  const tw = aWeeks[curW],
+    lw = aWeeks[curW - 1];
+  const stagList = Object.values(aBy).map(o => ({
+    o,
+    st: stagnation(o, today)
+  })).filter(x => x.st);
+  const bSeries = bodySeries(body);
   const [bodyOpen, setBodyOpen] = useState(false);
   const [bw, setBw] = useState('');
   const [bwaist, setBwaist] = useState('');
@@ -3527,7 +3963,88 @@ function DashTab({
       fontSize: 12,
       marginTop: 6
     }
-  }, wp, "% programu · start 7. 9. 2026")), /*#__PURE__*/React.createElement("div", {
+  }, wp, "% programu · start 7. 9. 2026")), (tw || lw) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      borderRadius: 16,
+      padding: '14px 16px',
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...S.secLabel,
+      marginBottom: 10
+    }
+  }, "Tento týden (W", curW, ") vs. minulý"), (() => {
+    const z = w => w || {
+      days: 0,
+      vol: 0,
+      prs: 0,
+      foodDays: 0,
+      protSum: 0,
+      prot160: 0,
+      sprints: 0
+    };
+    const a = z(tw),
+      b = z(lw);
+    const pa = a.foodDays ? Math.round(a.protSum / a.foodDays) : null,
+      pb = b.foodDays ? Math.round(b.protSum / b.foodDays) : null;
+    const dv = b.vol > 0 ? Math.round((a.vol / b.vol - 1) * 100) : null;
+    const row = (label, now, before, extra) => /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        padding: '5px 0'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx2,
+        fontSize: 15
+      }
+    }, label), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 15
+      }
+    }, /*#__PURE__*/React.createElement("b", null, now), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3,
+        fontSize: 13
+      }
+    }, " · minule ", before), extra));
+    return /*#__PURE__*/React.createElement(React.Fragment, null, row('Silové tréninky', a.days, b.days), row('Objem', tFmt(a.vol), tFmt(b.vol), dv !== null && lw ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: dv >= 0 ? C.ok : C.tx3,
+        fontSize: 13
+      }
+    }, " (", dv > 0 ? '+' : '', dv, " %)") : null), row('Nové rekordy', a.prs, b.prs), row('Ø bílkoviny', pa !== null ? pa + ' g' : '–', pb !== null ? pb + ' g' : '–'), row('Dny ≥ ' + PROTEIN_GOAL + ' g', a.prot160 + '/' + a.foodDays, b.prot160 + '/' + b.foodDays), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx3,
+        fontSize: 12,
+        marginTop: 6
+      }
+    }, "Tento týden ještě běží — srovnání je průběžné. Detail po týdnech najdeš v Deníku → Týdny."));
+  })()), stagList.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.wa + '1f',
+      borderRadius: 16,
+      padding: '12px 16px',
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.wa,
+      fontWeight: 600,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, "Bez zlepšení 3 tréninky"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.45
+    }
+  }, stagList.map(x => x.o.name).join(', '), ". Odhad síly se tři tréninky po sobě nezvedl nad dřívější maximum — stojí za to probrat s trenérem.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sf,
       borderRadius: 16,
@@ -3686,7 +4203,29 @@ function DashTab({
       color: C.tx2,
       fontSize: 15
     }
-  }, "Zatím žádné měření."), needMeasure && /*#__PURE__*/React.createElement("div", {
+  }, "Zatím žádné měření."), bSeries.length >= 2 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(LineChart, {
+    pts: bSeries.map(p => ({
+      x: p.x,
+      y: p.y
+    })),
+    avg: bSeries.map(p => ({
+      x: p.x,
+      y: p.avg
+    })),
+    color: C.bl,
+    height: 120,
+    label: "Hmotnost v čase"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3,
+      fontSize: 12,
+      marginTop: 4
+    }
+  }, "Plná čára = měření · přerušovaná = průměr za 7 dní")), needMeasure && /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.ac,
       fontSize: 13,
@@ -4264,7 +4803,11 @@ function DenikTab({
   onSaveTpl,
   onSetExType,
   legacyCount,
-  onOpenMigration
+  onOpenMigration,
+  foodLog,
+  body,
+  onMerge,
+  onToast
 }) {
   const [selDate, setSelDate] = useState(today);
   const [view, setView] = useState('log');
@@ -4299,15 +4842,40 @@ function DenikTab({
     return null;
   };
   const dayTasks = Object.entries(trainings).filter(([k]) => k.startsWith(selDate) && !/^\d{4}-\d{2}-\d{2}$/.test(k)).map(([, v]) => v);
-  const addEx = () => {
-    if (!newEx.trim()) return;
+  const [simWarn, setSimWarn] = useState(null);
+  const knownNames = () => {
+    const m = {};
+    Object.keys(trainings).filter(isDayKey).sort().forEach(d => (trainings[d].exercises || []).forEach(e => {
+      const n = (e.name || '').trim();
+      if (n) m[exNorm(n)] = n;
+    }));
+    return Object.values(m);
+  };
+  const addEx = (force, asName) => {
+    let nm = (asName || newEx).trim();
+    if (!nm) return;
+    if (force !== true) {
+      const names = knownNames();
+      const same = names.find(x => exNorm(x) === exNorm(nm));
+      if (same) nm = same;else {
+        const hit = names.find(x => simKey(x) === simKey(nm));
+        if (hit) {
+          setSimWarn({
+            typed: nm,
+            existing: hit
+          });
+          return;
+        }
+      }
+    }
     onSaveEx(selDate, [...exercises, {
       id: Date.now() + '',
-      name: newEx.trim(),
+      name: nm,
       sets: [],
       v: 2
     }]);
     setNewEx('');
+    setSimWarn(null);
   };
   const addFromTpl = tpl => {
     const ex = new Set(exercises.map(e => e.name));
@@ -4538,7 +5106,7 @@ function DenikTab({
       margin: '16px 0 12px'
     }
   }, "Deník"), /*#__PURE__*/React.createElement(Seg, {
-    options: [['log', 'Log'], ['progress', 'Progres'], ['templates', 'Šablony']],
+    options: [['log', 'Log'], ['progress', 'Progres'], ['weeks', 'Týdny'], ['templates', 'Šablony']],
     value: view,
     onChange: setView,
     style: {
@@ -4836,35 +5404,41 @@ function DenikTab({
     }
   }), /*#__PURE__*/React.createElement(Btn, {
     sm: true,
-    onClick: addEx
-  }, "+ Cvik"))), view === 'progress' && /*#__PURE__*/React.createElement("div", null, lbl('Vybrat cvik'), /*#__PURE__*/React.createElement("div", {
+    onClick: () => addEx()
+  }, "+ Cvik")), simWarn && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ac1,
+      borderRadius: 12,
+      padding: '12px 14px',
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      marginBottom: 8
+    }
+  }, "Už máš ", /*#__PURE__*/React.createElement("b", null, "„", simWarn.existing, "“"), ". Je to stejný cvik?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      flexWrap: 'wrap',
-      gap: 6,
-      marginBottom: 16
+      gap: 8,
+      flexWrap: 'wrap'
     }
-  }, exNames.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: C.tx3
-    }
-  }, "Zatím žádné záznamy"), exNames.map(nm => /*#__PURE__*/React.createElement("button", {
-    key: nm,
-    onClick: () => setProgEx(progEx === nm ? null : nm),
-    style: {
-      background: progEx === nm ? C.ac1 : C.sf2,
-      border: 'none',
-      color: progEx === nm ? C.ac : C.tx2,
-      padding: '9px 16px',
-      cursor: 'pointer',
-      fontSize: 14,
-      fontFamily: F,
-      borderRadius: 10
-    }
-  }, nm))), progEx && allProg[progEx] && /*#__PURE__*/React.createElement(ProgressDetail, {
-    name: progEx,
-    entries: allProg[progEx]
-  })), view === 'templates' && /*#__PURE__*/React.createElement("div", null, templates.map(tpl => editTpl === tpl.id ? /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: () => addEx(true, simWarn.existing)
+  }, "Použít „", simWarn.existing, "“"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => addEx(true, simWarn.typed),
+    style: S.secBtn
+  }, "Přidat „", simWarn.typed, "“ jako nový")))), view === 'progress' && /*#__PURE__*/React.createElement(ProgressView, {
+    trainings: trainings,
+    body: body,
+    onMerge: onMerge,
+    onToast: onToast
+  }), view === 'weeks' && /*#__PURE__*/React.createElement(WeeksView, {
+    trainings: trainings,
+    foodLog: foodLog,
+    body: body
+  }), view === 'templates' && /*#__PURE__*/React.createElement("div", null, templates.map(tpl => editTpl === tpl.id ? /*#__PURE__*/React.createElement("div", {
     key: tpl.id,
     style: {
       background: C.sf,
@@ -5789,7 +6363,7 @@ function NastaveniTab({
     }
     setBusy(false);
   };
-  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : (k.startsWith('backup-pred-prevodem') ? 'Před převodem činek ' : 'Před obnovou ') + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
+  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : (k.startsWith('backup-pred-prevodem') ? 'Před převodem činek ' : k.startsWith('backup-pred-sloucenim') ? 'Před sloučením cviků ' : 'Před obnovou ') + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 34,
@@ -5845,6 +6419,31 @@ function NastaveniTab({
     sm: true,
     onClick: onOpenMigration
   }, "Zobrazit náhled převodu")), {
+    marginBottom: 12
+  }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: S.secLabel
+  }, "Export pro analýzu"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.5,
+      marginBottom: 12
+    }
+  }, "Týdenní souhrn jako Markdown (např. do Obsidianu) nebo všechny série jako CSV pro Excel/Numbers."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    ghost: true,
+    onClick: () => shareOrDownload('deburter-souhrn-' + ymd(new Date()) + '.md', weeklyMarkdown(currentData, ymd(new Date())), 'text/markdown')
+  }, "Souhrn (Markdown)"), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    ghost: true,
+    onClick: () => shareOrDownload('deburter-serie-' + ymd(new Date()) + '.csv', setsCSV(currentData['a12:trainings']), 'text/csv')
+  }, "Série (CSV)"))), {
     marginBottom: 12
   }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: S.secLabel
@@ -6011,6 +6610,696 @@ function NastaveniTab({
       marginTop: 6
     }
   }, "· Kuřecí prsa 150g → ~33g"), /*#__PURE__*/React.createElement("div", null, "· Tvaroh 200g → ~28g · Skyr 250g → ~27g"), /*#__PURE__*/React.createElement("div", null, "· Treska 200g → ~40g · Vejce 3ks+2bílky → ~26g")))));
+}
+
+// ── GRAF (čára v čase) ────────────────────────────────────────────────────────
+function LineChart({
+  pts,
+  avg,
+  color,
+  height,
+  fmt,
+  label
+}) {
+  if (!pts || !pts.length) return null;
+  const W = 330,
+    H = height || 150,
+    pl = 8,
+    pr = 8,
+    pt = 22,
+    pb = 24;
+  const col = color || C.ac,
+    f = fmt || nf1;
+  const xs = pts.map(p => parseD(p.x).getTime()),
+    x0 = Math.min(...xs),
+    x1 = Math.max(...xs);
+  const all = pts.map(p => p.y).concat((avg || []).map(p => p.y));
+  let y0 = Math.min(...all),
+    y1 = Math.max(...all);
+  if (y1 - y0 < 1e-9) {
+    y0 -= 1;
+    y1 += 1;
+  }
+  const pad = (y1 - y0) * 0.12;
+  y0 -= pad;
+  y1 += pad;
+  const X = d => x1 === x0 ? W / 2 : pl + (parseD(d).getTime() - x0) / (x1 - x0) * (W - pl - pr);
+  const Y = v => pt + (1 - (v - y0) / (y1 - y0)) * (H - pt - pb);
+  const path = arr => arr.map((p, i) => (i ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p.y).toFixed(1)).join(' ');
+  const first = pts[0],
+    last = pts[pts.length - 1];
+  const lastAnchor = X(last.x) > W - 40 ? 'end' : X(last.x) < 40 ? 'start' : 'middle';
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: '0 0 ' + W + ' ' + H,
+    width: "100%",
+    role: "img",
+    "aria-label": label || 'Graf, poslední hodnota ' + f(last.y),
+    style: {
+      display: 'block',
+      fontFamily: F,
+      overflow: 'visible'
+    }
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: pl,
+    x2: W - pr,
+    y1: H - pb,
+    y2: H - pb,
+    stroke: C.hair,
+    strokeWidth: "1"
+  }), avg && avg.length > 1 && /*#__PURE__*/React.createElement("path", {
+    d: path(avg),
+    fill: "none",
+    stroke: col,
+    strokeOpacity: "0.5",
+    strokeWidth: "2",
+    strokeDasharray: "5 4"
+  }), pts.length > 1 && /*#__PURE__*/React.createElement("path", {
+    d: path(pts),
+    fill: "none",
+    stroke: col,
+    strokeWidth: "2.5",
+    strokeLinejoin: "round",
+    strokeLinecap: "round"
+  }), pts.map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: X(p.x),
+    cy: Y(p.y),
+    r: i === pts.length - 1 ? 4.5 : 3,
+    fill: i === pts.length - 1 ? col : C.sf,
+    stroke: col,
+    strokeWidth: "2"
+  })), /*#__PURE__*/React.createElement("text", {
+    x: X(last.x),
+    y: Y(last.y) - 10,
+    textAnchor: lastAnchor,
+    fill: col,
+    fontSize: "13",
+    fontWeight: "700"
+  }, f(last.y)), /*#__PURE__*/React.createElement("text", {
+    x: pl,
+    y: H - 6,
+    fill: C.tx3,
+    fontSize: "11"
+  }, fmtD(first.x)), pts.length > 1 && /*#__PURE__*/React.createElement("text", {
+    x: W - pr,
+    y: H - 6,
+    textAnchor: "end",
+    fill: C.tx3,
+    fontSize: "11"
+  }, fmtD(last.x)));
+}
+
+// ── PROGRES (výběr cviku, odhad 1RM, rozsah, stagnace, duplicity) ────────────
+function ProgressView({
+  trainings,
+  body,
+  onMerge,
+  onToast
+}) {
+  const [sel, setSel] = useState(null);
+  const [metric, setMetric] = useState('e1rm');
+  const [range, setRange] = useState('all');
+  const [merge, setMerge] = useState(null);
+  const today = ymd(new Date());
+  const by = buildSessions(trainings);
+  const list = Object.values(by).filter(o => o.sessions.length);
+  const dupes = findDuplicates(list);
+  const o = sel && by[sel];
+  if (!list.length) return empt('Zatím žádné záznamy', 'Progres se ukáže po prvním zapsaném tréninku.');
+  let detail = null;
+  if (o) {
+    const isReps = o.type === 'reps';
+    const opts = isReps ? [['reps', 'Max. opak.'], ['tot', 'Celkem op.']] : [['e1rm', '1RM'], ['w', 'Váha'], ['vol', 'Objem'], ['reps', 'MAX série']];
+    const m = opts.some(x => x[0] === metric) ? metric : opts[0][0];
+    const val = x => m === 'e1rm' ? x.e1rm : m === 'w' ? x.bestW : m === 'vol' ? x.vol : m === 'tot' ? x.totReps : isReps ? x.topReps : x.maxReps;
+    const unit = m === 'e1rm' || m === 'w' || m === 'vol' ? ' kg' : ' op.';
+    const fmtV = v => m === 'vol' ? tFmt(v) : m === 'e1rm' || m === 'w' ? kgTxt(nf1(v), o.type) + ' kg' : Math.round(v) + ' op.';
+    const from = range === '4w' ? ymd(addDays(parseD(today), -27)) : '0000';
+    const ss = o.sessions.filter(x => x.date >= from);
+    const pts = ss.map(x => ({
+      x: x.date,
+      y: val(x)
+    })).filter(p => p.y > 0);
+    const firstV = pts.length ? pts[0].y : 0,
+      lastV = pts.length ? pts[pts.length - 1].y : 0;
+    const pct = firstV > 0 && pts.length > 1 ? Math.round((lastV / firstV - 1) * 100) : null;
+    const allV = o.sessions.map(val),
+      best = Math.max(...allV),
+      bestS = o.sessions[allV.lastIndexOf(best)];
+    const stag = stagnation(o, today);
+    const lastS = o.sessions[o.sessions.length - 1];
+    const bw = !isReps && o.type === 'bar' ? bodyWeightAt(body, lastS.date) : null;
+    detail = cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: 8,
+        marginBottom: 2
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 20,
+        fontFamily: F
+      }
+    }, o.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx3,
+        fontSize: 13,
+        flexShrink: 0
+      }
+    }, o.sessions.length, "× · ", (EX_TYPES.find(x => x[0] === o.type) || [])[1])), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 10,
+        flexWrap: 'wrap',
+        margin: '6px 0 12px'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 30,
+        fontWeight: 700,
+        fontFamily: F,
+        color: C.ac,
+        letterSpacing: '-0.5px'
+      }
+    }, fmtV(lastV)), pct !== null && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 15,
+        fontWeight: 600,
+        color: pct > 0 ? C.ok : pct < 0 ? C.er : C.tx3
+      }
+    }, pct > 0 ? '+' : '', pct, " % ", range === '4w' ? 'za 4 týdny' : 'od startu')), /*#__PURE__*/React.createElement(Seg, {
+      options: opts,
+      value: m,
+      onChange: setMetric,
+      style: {
+        marginBottom: 8
+      }
+    }), /*#__PURE__*/React.createElement(Seg, {
+      options: [['all', 'Celý program'], ['4w', 'Poslední 4 týdny']],
+      value: range,
+      onChange: setRange,
+      style: {
+        marginBottom: 12
+      }
+    }), pts.length ? /*#__PURE__*/React.createElement(LineChart, {
+      pts: pts,
+      fmt: v => m === 'vol' ? tFmt(v) : (Math.round(v * 10) / 10 + '').replace('.', ','),
+      label: o.name + ', ' + (opts.find(x => x[0] === m) || [])[1]
+    }) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx3,
+        fontSize: 14,
+        padding: '20px 0',
+        textAlign: 'center'
+      }
+    }, "V tomto rozsahu nejsou data."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        marginTop: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        color: C.tx2
+      }
+    }, "Rekord: ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: C.tx
+      }
+    }, fmtV(best)), " · ", fmtD(bestS.date)), bw && lastS.e1rm > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        color: C.tx2
+      }
+    }, "Relativní síla: ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: C.tx
+      }
+    }, nf1(lastS.e1rm / bw), "×"), " tělesné hmotnosti ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3
+      }
+    }, "(", nf1(bw), " kg)")), stag && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        color: C.wa,
+        background: C.wa + '1f',
+        borderRadius: 10,
+        padding: '8px 12px'
+      }
+    }, "3 tréninky bez zlepšení (od ", fmtD(stag.since), "). Stojí za to probrat s trenérem.")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: '0.5px solid ' + C.hair,
+        marginTop: 14,
+        paddingTop: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: isReps ? '1fr 1fr 1fr' : '64px 1fr 70px 70px',
+        gap: 6
+      }
+    }, (isReps ? ['DATUM', 'MAX OP.', 'CELKEM'] : ['DATUM', 'NEJLEPŠÍ', '1RM', 'OBJEM']).map((h, i) => /*#__PURE__*/React.createElement("div", {
+      key: h,
+      style: {
+        color: C.tx3,
+        fontSize: 12,
+        fontWeight: 600,
+        textAlign: i ? 'right' : 'left'
+      }
+    }, h)), [...o.sessions].reverse().map((x, i) => isReps ? [/*#__PURE__*/React.createElement("div", {
+      key: i + 'd',
+      style: {
+        fontSize: 14,
+        color: C.tx2
+      }
+    }, fmtD(x.date)), /*#__PURE__*/React.createElement("div", {
+      key: i + 'a',
+      style: {
+        fontSize: 14,
+        textAlign: 'right'
+      }
+    }, x.topReps, x.level ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3
+      }
+    }, " · d", x.level) : ''), /*#__PURE__*/React.createElement("div", {
+      key: i + 'b',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        color: C.tx2
+      }
+    }, x.totReps)] : [/*#__PURE__*/React.createElement("div", {
+      key: i + 'd',
+      style: {
+        fontSize: 14,
+        color: C.tx2
+      }
+    }, fmtD(x.date)), /*#__PURE__*/React.createElement("div", {
+      key: i + 'a',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        whiteSpace: 'nowrap'
+      }
+    }, kgTxt(nf1(x.bestW), o.type), " × ", x.bestWR), /*#__PURE__*/React.createElement("div", {
+      key: i + 'b',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        color: i === 0 ? C.ac : C.tx,
+        fontWeight: i === 0 ? 700 : 400
+      }
+    }, nf1(x.e1rm)), /*#__PURE__*/React.createElement("div", {
+      key: i + 'c',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        color: C.tx2
+      }
+    }, tFmt(x.vol))]))), !isReps && /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx3,
+        fontSize: 12,
+        marginTop: 10,
+        lineHeight: 1.4
+      }
+    }, "Odhad 1RM = váha × (1 + opakování / 30) z nejlepší série tréninku", o.type === 'db2' ? ', u 2 činek na jednu činku' : '', ". Spojuje váhu i opakování, takže ukáže pokrok, i když zvedáš víc opakování se stejnou vahou.")), {
+      marginBottom: 16
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", null, dupes.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ac1,
+      borderRadius: 16,
+      padding: '12px 14px',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.ac,
+      fontWeight: 600,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, "Možné duplicity"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 13,
+      marginBottom: 8
+    }
+  }, "Stejný cvik pod dvěma názvy dělí historii i rekordy."), dupes.map(g => /*#__PURE__*/React.createElement("div", {
+    key: g[0].key,
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      padding: '6px 0'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      minWidth: 0
+    }
+  }, g.map(x => x.name + ' (' + x.sessions.length + '×)').join(' · ')), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    onClick: () => setMerge({
+      dst: g[0].name,
+      src: g[1].name
+    })
+  }, "Sloučit")))), o && detail, GROUP_ORDER.map(gk => {
+    const items = list.filter(x => x.group === gk).sort((a, b) => a.name.localeCompare(b.name));
+    if (!items.length) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: gk,
+      style: {
+        marginBottom: 12
+      }
+    }, lbl(GROUPS[gk]), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 6
+      }
+    }, items.map(x => {
+      const on = sel === x.key,
+        st = stagnation(x, today);
+      return /*#__PURE__*/React.createElement("button", {
+        key: x.key,
+        onClick: () => {
+          setSel(on ? null : x.key);
+          try {
+            window.scrollTo(0, 0);
+          } catch (e) {}
+        },
+        "aria-pressed": on,
+        style: {
+          background: on ? C.ac1 : C.sf2,
+          border: 'none',
+          color: on ? C.ac : C.tx2,
+          padding: '9px 14px',
+          cursor: 'pointer',
+          fontSize: 15,
+          fontFamily: F,
+          borderRadius: 10,
+          minHeight: 40,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6
+        }
+      }, x.name, st && /*#__PURE__*/React.createElement("span", {
+        "aria-label": "bez zlepšení",
+        style: {
+          width: 7,
+          height: 7,
+          borderRadius: 4,
+          background: C.wa,
+          display: 'inline-block'
+        }
+      }));
+    })));
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMerge({
+      dst: '',
+      src: ''
+    }),
+    style: {
+      ...S.secBtn,
+      width: '100%',
+      marginTop: 4
+    }
+  }, "Sloučit cviky ručně…"), merge && /*#__PURE__*/React.createElement(MergeSheet, {
+    names: list.map(x => x.name).sort((a, b) => a.localeCompare(b)),
+    init: merge,
+    trainings: trainings,
+    by: by,
+    onMerge: onMerge,
+    onClose: () => setMerge(null),
+    onDone: dst => {
+      setMerge(null);
+      setSel(exNorm(dst));
+      onToast && onToast('Sloučeno. Záloha je v Nastavení.');
+    }
+  }));
+}
+function MergeSheet({
+  names,
+  init,
+  trainings,
+  by,
+  onMerge,
+  onClose,
+  onDone
+}) {
+  const [dst, setDst] = useState(init.dst || '');
+  const [src, setSrc] = useState(init.src || '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const ok = src && dst && exNorm(src) !== exNorm(dst);
+  const prev = ok ? mergePreview(trainings, [], src, dst) : null;
+  const tSrc = src && by[exNorm(src)],
+    tDst = dst && by[exNorm(dst)];
+  const typeDiff = tSrc && tDst && tSrc.type !== tDst.type;
+  const tl = t => (EX_TYPES.find(x => x[0] === t) || [])[1];
+  const sel = (v, set, label) => /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'block',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: S.fieldLabel
+  }, label), /*#__PURE__*/React.createElement("select", {
+    value: v,
+    onChange: e => set(e.target.value),
+    style: {
+      ...inpS,
+      appearance: 'none',
+      WebkitAppearance: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "— vyber —"), names.map(n => /*#__PURE__*/React.createElement("option", {
+    key: n,
+    value: n
+  }, n, " (", (by[exNorm(n)] || {
+    sessions: []
+  }).sessions.length, "×)"))));
+  const apply = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      await onMerge(src, dst);
+      onDone(dst);
+    } catch (e) {
+      setErr('Záloha se nepodařila, nic jsem nesloučil. Zkus to znovu. (' + (e.message || e) + ')');
+      setBusy(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement(Modal, {
+    onClose: () => !busy && onClose()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 20,
+      fontFamily: F,
+      marginBottom: 6
+    }
+  }, "Sloučit cviky"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.45,
+      marginBottom: 14
+    }
+  }, "Záznamy druhého cviku se přejmenují na první. Ve dnech, kdy máš oba, se série spojí do jednoho cviku. Nic se nesmaže a před sloučením se uloží záloha."), sel(dst, setDst, 'PONECHAT NÁZEV'), sel(src, setSrc, 'SLOUČIT DO NĚJ'), prev && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf2,
+      borderRadius: 12,
+      padding: '12px 14px',
+      marginBottom: 12,
+      fontSize: 14,
+      lineHeight: 1.6
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "„", src, "“: ", /*#__PURE__*/React.createElement("b", null, prev.days), " tréninků · ", /*#__PURE__*/React.createElement("b", null, prev.sets), " sérií → „", dst, "“"), prev.both > 0 && /*#__PURE__*/React.createElement("div", null, "Dny s oběma cviky: ", /*#__PURE__*/React.createElement("b", null, prev.both), " (série se spojí)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3
+    }
+  }, "Šablony s tímto názvem se upraví také."), typeDiff && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.wa,
+      marginTop: 4
+    }
+  }, "Pozor: jiný typ zátěže (", tl(tSrc.type), " vs. ", tl(tDst.type), "). Sloučené série převezmou typ „", dst, "“, čísla se nepřepočítají.")), src && dst && !ok && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.er,
+      fontSize: 14,
+      marginBottom: 10
+    }
+  }, "Vyber dva různé cviky."), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.er,
+      fontSize: 14,
+      marginBottom: 10
+    }
+  }, err), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    dis: !ok || busy,
+    style: {
+      flex: 1
+    },
+    onClick: apply
+  }, busy ? 'Ukládám zálohu…' : 'Sloučit'), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    disabled: busy,
+    style: {
+      ...S.secBtn,
+      flex: 1,
+      minHeight: 50
+    }
+  }, "Zrušit")));
+}
+
+// ── TÝDNY (W1–W12) ────────────────────────────────────────────────────────────
+const GROUP_COLORS = () => ({
+  chest: C.ac,
+  shoulders: C.bl,
+  legs: C.ok,
+  other: C.tx3
+});
+function WeeksView({
+  trainings,
+  foodLog,
+  body
+}) {
+  const today = ymd(new Date());
+  const by = buildSessions(trainings);
+  const weeks = weeklyStats(trainings, foodLog, body, by);
+  const cur = Math.max(1, weekOf(today));
+  const maxN = Math.max(cur, ...Object.keys(weeks).map(Number), 1);
+  const ns = [];
+  for (let n = maxN; n >= 1; n--) ns.push(n);
+  const maxVol = Math.max(1, ...Object.values(weeks).map(w => w.vol));
+  const gc = GROUP_COLORS();
+  const f = d => d.getDate() + '. ' + (d.getMonth() + 1) + '.';
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12,
+      flexWrap: 'wrap',
+      marginBottom: 12
+    }
+  }, ['chest', 'shoulders', 'legs'].map(g => /*#__PURE__*/React.createElement("span", {
+    key: g,
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      fontSize: 13,
+      color: C.tx2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: 3,
+      background: gc[g]
+    }
+  }), GROUPS[g]))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      borderRadius: 16,
+      overflow: 'hidden'
+    }
+  }, ns.map((n, i) => {
+    const w = weeks[n],
+      st = weekStartD(n);
+    return /*#__PURE__*/React.createElement("div", {
+      key: n,
+      style: {
+        padding: '12px 16px',
+        borderTop: i ? '0.5px solid ' + C.hair : 'none'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        marginBottom: 6
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 700,
+        fontSize: 16
+      }
+    }, "W", n, " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3,
+        fontWeight: 400,
+        fontSize: 13
+      }
+    }, f(st), " – ", f(addDays(st, 6))), n === cur && /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: 6,
+        background: C.ac1,
+        color: C.ac,
+        fontSize: 11,
+        fontWeight: 700,
+        padding: '2px 6px',
+        borderRadius: 5
+      }
+    }, "TENTO TÝDEN")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx2,
+        fontSize: 14
+      }
+    }, w ? w.days : 0, " ", (w ? w.days : 0) === 1 ? 'trénink' : (w ? w.days : 0) >= 2 && (w ? w.days : 0) <= 4 ? 'tréninky' : 'tréninků')), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        height: 8,
+        borderRadius: 4,
+        overflow: 'hidden',
+        background: C.sf2,
+        marginBottom: 6
+      }
+    }, w && GROUP_ORDER.map(g => w.volG[g] > 0 && /*#__PURE__*/React.createElement("div", {
+      key: g,
+      style: {
+        width: w.volG[g] / maxVol * 100 + '%',
+        background: gc[g]
+      }
+    }))), w ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: C.tx2,
+        lineHeight: 1.55
+      }
+    }, /*#__PURE__*/React.createElement("div", null, tFmt(w.vol), w.prs ? /*#__PURE__*/React.createElement("span", null, " · ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: C.ok
+      }
+    }, w.prs, " ", w.prs === 1 ? 'rekord' : w.prs <= 4 ? 'rekordy' : 'rekordů')) : '', w.sprints ? ' · ' + w.sprints + '× sprinty' : '', w.km ? ' · ' + nf1(w.km) + ' km' : ''), w.foodDays > 0 && /*#__PURE__*/React.createElement("div", null, "Ø ", Math.round(w.protSum / w.foodDays), " g B · ", w.prot160, "/", w.foodDays, " dní ≥ ", PROTEIN_GOAL, " g", w.kcalDays ? ' · Ø ' + Math.round(w.kcalSum / w.kcalDays) + ' kcal' : '', w.problem || w.cheat ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.wa
+      }
+    }, " · ", w.problem ? w.problem + '× problém' : '', w.problem && w.cheat ? ', ' : '', w.cheat ? w.cheat + '× cheat' : '') : ''), w.bw.length > 0 && /*#__PURE__*/React.createElement("div", null, "Ø ", nf1(avgOf(w.bw)), " kg")) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: C.tx3
+      }
+    }, "Bez záznamů"));
+  })));
 }
 
 // ── PŘEVOD ZÁPISU ČINEK ───────────────────────────────────────────────────────
@@ -6678,6 +7967,13 @@ function App() {
     sSave('a12:exTypes', next);
   };
   const legacyCount = Object.entries(trainings).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k)).reduce((n, [, t]) => n + (t.exercises || []).filter(isLegacyEx).length, 0);
+  const mergeExercises = async (src, dst) => {
+    await flushAll();
+    await backupNamed('backup-pred-sloucenim', currentData); // bez zálohy se nic nesloučí
+    saveT(mergeTrainings(trainings, src, dst));
+    const nt = mergeTemplates(templates, src, dst);
+    if (JSON.stringify(nt) !== JSON.stringify(templates)) saveTpl(nt);
+  };
   const applyMigration = next => {
     saveT(next);
     setMigOpen(false);
@@ -6768,7 +8064,11 @@ function App() {
         onSaveTpl: saveTpl,
         onSetExType: setExType,
         legacyCount: legacyCount,
-        onOpenMigration: () => setMigOpen(true)
+        onOpenMigration: () => setMigOpen(true),
+        foodLog: foodLog,
+        body: body,
+        onMerge: mergeExercises,
+        onToast: showToast
       });
       break;
     case 'jidlo':
