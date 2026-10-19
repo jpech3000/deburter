@@ -99,7 +99,68 @@ const PROTEIN_GOAL = 160;
 // db2  = dvě jednoručky najednou, zapisuje se váha JEDNÉ činky → „2× 20 kg × 10“
 // db1  = jedna jednoručka po stranách, váha jedné činky, opakování celkem za obě strany
 // reps = jen opakování (+ nepovinné nastavení, např. číslo díry v kleci)
-const EX_TYPES = [['bar', 'Osa'], ['db2', '2 činky'], ['db1', '1 činka'], ['reps', 'Opak.']];
+// assist = vlastní váha s pomocí gumy (shyby): opakování + barva gumy u každé série
+const EX_TYPES = [['bar', 'Osa'], ['db2', '2 činky'], ['db1', '1 činka'], ['reps', 'Opak.'], ['assist', 'Guma']];
+const noKg = t => t === 'reps' || t === 'assist';
+const BANDS = [{
+  k: 'none',
+  label: 'Bez gumy',
+  short: 'bez gumy',
+  color: 'transparent',
+  lo: 0,
+  hi: 0
+}, {
+  k: 'yellow',
+  label: 'Žlutá',
+  short: 'žlutá',
+  color: '#f5c400',
+  lo: 2,
+  hi: 5
+}, {
+  k: 'red',
+  label: 'Červená',
+  short: 'červená',
+  color: '#ff453a',
+  lo: 7,
+  hi: 14
+}, {
+  k: 'black',
+  label: 'Černá',
+  short: 'černá',
+  color: '#111111',
+  lo: 14,
+  hi: 27
+}, {
+  k: 'purple',
+  label: 'Fialová',
+  short: 'fialová',
+  color: '#a855f7',
+  lo: 27,
+  hi: 45
+}, {
+  k: 'green',
+  label: 'Zelená',
+  short: 'zelená',
+  color: '#22c55e',
+  lo: 32,
+  hi: 54
+}];
+const bandOf = k => BANDS.find(b => b.k === k) || null; // '' = nezadáno
+const bandMid = k => {
+  const b = bandOf(k);
+  return b ? (b.lo + b.hi) / 2 : null;
+}; // pomoc gumy v kg (střed rozsahu)
+const bandKey = v => {
+  const c = String(v ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
+  if (!c) return '';
+  if (/^(zlut|yellow)/.test(c)) return 'yellow';
+  if (/^(cerven|red)/.test(c)) return 'red';
+  if (/^(cern|black)/.test(c)) return 'black';
+  if (/^(fial|purple|violet)/.test(c)) return 'purple';
+  if (/^(zelen|green)/.test(c)) return 'green';
+  if (/^(bez|none|zadna|nic)/.test(c)) return 'none';
+  return '';
+};
 const exNorm = s => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 const DEFAULT_EX_TYPES = {
   'incline bench press': 'db2',
@@ -109,18 +170,28 @@ const DEFAULT_EX_TYPES = {
   'lateral raise': 'db2',
   'single squat': 'db2',
   'db row': 'db1',
-  'superman': 'reps'
+  'superman': 'reps',
+  'shyby': 'assist',
+  'shyb': 'assist',
+  'pull up': 'assist',
+  'pull ups': 'assist',
+  'pull-up': 'assist',
+  'pull-ups': 'assist'
 };
 // Starý zápis: tyto cviky se zapisovaly jako součet obou činek → při převodu ÷ 2
 const LEGACY_TOTAL = ['incline bench press', 'single squat'];
 let exTypeOverrides = {};
 const exTypeOf = name => exTypeOverrides[exNorm(name)] || DEFAULT_EX_TYPES[exNorm(name)] || 'bar';
-const volFactor = t => t === 'db2' ? 2 : t === 'reps' ? 0 : 1;
+const volFactor = t => t === 'db2' ? 2 : noKg(t) ? 0 : 1;
 const exVolume = ex => volFactor(exTypeOf(ex.name)) * (ex.sets || []).reduce((a, x) => a + (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0), 0);
 const kgTxt = (w, t) => (t === 'db2' ? '2× ' : '') + String(w).replace('.', ',');
 const setTxtT = (s, t) => {
   const w = parseFloat(s.weight) || 0,
     r = parseInt(s.reps) || 0;
+  if (t === 'assist') {
+    const b = bandOf(s.band);
+    return r + ' op.' + (b ? ' · ' + b.short : '');
+  }
   return t === 'reps' || !(w > 0) ? r + ' op.' : kgTxt(w, t) + '×' + r;
 };
 const isLegacyEx = ex => !!ex && ex.v !== 2;
@@ -216,7 +287,7 @@ const weekOf = ds => Math.floor(daysBetween(PROGRAM_START, ds) / 7) + 1; // < 1 
 const weekStartD = n => addDays(parseD(PROGRAM_START), (n - 1) * 7);
 // Podobné názvy (Dead lift = Deadlift, RDL = Romanian deadlift, Dřep = Squat…)
 const compactKey = s => exNorm(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
-const ALIASES = [['romaniandeadlift', 'rdl', 'rumunskymrtvytah'], ['squat', 'drep'], ['deadlift', 'mrtvytah'], ['benchpress', 'bench'], ['militarypressdb', 'rotacnitlak', 'militarypressrotacnitlak'], ['lateralraise', 'lateral', 'lateralr'], ['deltflys', 'deltfly'], ['bicepscurl', 'bicepsovyzdvih', 'biceps']];
+const ALIASES = [['shyby', 'shyb', 'pullups', 'pullup', 'pullupy'], ['romaniandeadlift', 'rdl', 'rumunskymrtvytah'], ['squat', 'drep'], ['deadlift', 'mrtvytah'], ['benchpress', 'bench'], ['militarypressdb', 'rotacnitlak', 'militarypressrotacnitlak'], ['lateralraise', 'lateral', 'lateralr'], ['deltflys', 'deltfly'], ['bicepscurl', 'bicepsovyzdvih', 'biceps']];
 const simKey = s => {
   const c = compactKey(s);
   const g = ALIASES.find(a => a.includes(c));
@@ -224,7 +295,7 @@ const simKey = s => {
 };
 
 // Tréninky po cvicích: každý trénink = nejlepší série, odhad 1RM, objem, MAX série…
-function buildSessions(trainings) {
+function buildSessions(trainings, body) {
   const by = {};
   Object.keys(trainings || {}).filter(isDayKey).sort().forEach(date => {
     ((trainings[date] || {}).exercises || []).forEach(raw => {
@@ -233,8 +304,9 @@ function buildSessions(trainings) {
       const ex = isLegacyEx(raw) ? migrateExercise(raw) : raw;
       const t = exTypeOf(name);
       const sets = (ex.sets || []).map(x => ({
-        w: t === 'reps' ? 0 : parseFloat(x.weight) || 0,
-        r: parseInt(x.reps) || 0
+        w: noKg(t) ? 0 : parseFloat(x.weight) || 0,
+        r: parseInt(x.reps) || 0,
+        band: x.band || ''
       })).filter(x => x.w > 0 || x.r > 0);
       if (!sets.length) return;
       const k = exNorm(name);
@@ -276,7 +348,8 @@ function buildSessions(trainings) {
         totReps: sets.reduce((a, x) => a + x.r, 0),
         nSets: sets.length,
         group: dayGroup(date),
-        level: ex.level || ''
+        level: ex.level || '',
+        ...(t === 'assist' ? assistInfo(sets, body, date) : {})
       });
     });
   });
@@ -289,7 +362,35 @@ function buildSessions(trainings) {
   });
   return by;
 }
-const strengthOf = o => o.type === 'reps' ? x => x.topReps : x => x.e1rm;
+// Shyby s gumou: pomoc = nejslabší guma v tréninku; síla = odhad 1RM z (tělesná hmotnost − pomoc gumy)
+function assistInfo(sets, body, date) {
+  const known = sets.filter(x => x.r > 0 && bandOf(x.band));
+  const bands = [...new Set(known.map(x => x.band))];
+  const assist = known.length ? Math.min(...known.map(x => bandMid(x.band))) : null;
+  const bw = body && bodyWeightAt(body, date) || 80;
+  let eff = 0,
+    best = null;
+  sets.forEach(x => {
+    const m = bandMid(x.band);
+    const e = e1rm(Math.max(1, bw - (m || 0)), x.r);
+    if (e > eff) {
+      eff = e;
+      best = x;
+    }
+  });
+  const top = sets.reduce((b, x) => x.r > b.r ? x : b, {
+    r: 0,
+    band: ''
+  });
+  return {
+    assist,
+    bands,
+    eff,
+    effSet: best,
+    topBand: top.band
+  };
+}
+const strengthOf = o => o.type === 'reps' ? x => x.topReps : o.type === 'assist' ? x => x.eff : x => x.e1rm;
 // 3 poslední tréninky bez zlepšení oproti dřívějšímu maximu (jen aktivní cviky)
 function stagnation(o, today) {
   const ss = o.sessions;
@@ -534,7 +635,7 @@ function weeklyMarkdown(data, todayStr) {
   const tr = data['a12:trainings'] || {},
     fl = data['deburter:foodlog'] || [],
     bd = data['a12:body'] || [];
-  const by = buildSessions(tr),
+  const by = buildSessions(tr, bd),
     weeks = weeklyStats(tr, fl, bd, by);
   const f = d => d.getDate() + '. ' + (d.getMonth() + 1) + '.';
   const L = ['# Debuřtér — souhrn A12', '', 'Export ' + todayStr + ' · start programu ' + PROGRAM_START, ''];
@@ -556,8 +657,9 @@ function weeklyMarkdown(data, todayStr) {
     rows.forEach(o => {
       const a = o.sessions[0],
         z = o.sessions[o.sessions.length - 1];
-      if (o.type === 'reps') {
-        L.push('| ' + o.name + ' | ' + z.topReps + ' op. | — | ' + (z.topReps - a.topReps >= 0 ? '+' : '') + (z.topReps - a.topReps) + ' op. |');
+      if (noKg(o.type)) {
+        const bb = o.type === 'assist' && bandOf(z.topBand);
+        L.push('| ' + o.name + ' | ' + z.topReps + ' op.' + (bb ? ' · ' + bb.short : '') + ' | — | ' + (z.topReps - a.topReps >= 0 ? '+' : '') + (z.topReps - a.topReps) + ' op. |');
         return;
       }
       const pct = a.e1rm > 0 ? Math.round((z.e1rm / a.e1rm - 1) * 100) : 0;
@@ -568,15 +670,15 @@ function weeklyMarkdown(data, todayStr) {
   return L.join('\n');
 }
 function setsCSV(trainings) {
-  const L = ['datum;tyden;cvik;typ;serie;vaha_kg;opakovani;odhad_1rm_kg;dira'];
+  const L = ['datum;tyden;cvik;typ;serie;vaha_kg;opakovani;odhad_1rm_kg;dira;guma'];
   const c = v => String(v).replace('.', ',');
   Object.keys(trainings || {}).filter(isDayKey).sort().forEach(d => ((trainings[d] || {}).exercises || []).forEach(raw => {
     const ex = isLegacyEx(raw) ? migrateExercise(raw) : raw;
     const t = exTypeOf(ex.name);
     (ex.sets || []).forEach((x, i) => {
-      const w = t === 'reps' ? 0 : parseFloat(x.weight) || 0,
+      const w = noKg(t) ? 0 : parseFloat(x.weight) || 0,
         r = parseInt(x.reps) || 0;
-      L.push([d, weekOf(d), '"' + String(ex.name || '').replace(/"/g, '""') + '"', t, i + 1, w ? c(w) : '', r || '', w && r ? c(r1(e1rm(w, r))) : '', x.level || ex.level || ''].join(';'));
+      L.push([d, weekOf(d), '"' + String(ex.name || '').replace(/"/g, '""') + '"', t, i + 1, w ? c(w) : '', r || '', w && r ? c(r1(e1rm(w, r))) : '', x.level || ex.level || '', (bandOf(x.band) || {}).label || ''].join(';'));
     });
   }));
   return '﻿' + L.join('\r\n');
@@ -2445,7 +2547,8 @@ function Seg({
   options,
   value,
   onChange,
-  style
+  style,
+  small
 }) {
   return /*#__PURE__*/React.createElement("div", {
     role: "tablist",
@@ -2471,10 +2574,10 @@ function Seg({
         borderRadius: 7,
         cursor: 'pointer',
         fontFamily: F,
-        fontSize: 14,
+        fontSize: small ? 13 : 14,
         whiteSpace: 'nowrap',
         fontWeight: on ? 600 : 500,
-        padding: '6px 8px',
+        padding: small ? '6px 2px' : '6px 8px',
         background: on ? C.seg : 'transparent',
         color: on ? col || C.tx : C.tx2,
         boxShadow: on ? '0 1px 3px rgba(0,0,0,0.25)' : 'none',
@@ -3099,6 +3202,80 @@ const setTxt = s => {
     r = parseInt(s.reps) || 0;
   return w > 0 ? `${w}×${r}` : `${r} op.`;
 };
+
+// Výběr gumy u série (nativní výběr = iOS kolečko)
+function BandSelect({
+  value,
+  onChange,
+  check,
+  label
+}) {
+  const b = bandOf(value);
+  const ring = !b || b.k === 'none' || b.k === 'black';
+  // Viditelný je jen název gumy; přes něj leží průhledný nativní výběr (na iOS kolečko s rozsahy odporu)
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      background: C.sf2,
+      borderRadius: 10,
+      minHeight: 44,
+      padding: '0 10px',
+      ...(check ? {
+        boxShadow: 'inset 0 0 0 1.5px ' + C.ac
+      } : {})
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+      flexShrink: 0,
+      background: b ? b.color : 'transparent',
+      boxShadow: ring ? 'inset 0 0 0 1.5px ' + C.tx3 : 'none'
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 16,
+      color: b ? C.tx : C.tx3,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }
+  }, b ? b.label : 'guma'), /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      color: C.tx3,
+      fontSize: 11,
+      flexShrink: 0
+    }
+  }, "▼"), /*#__PURE__*/React.createElement("select", {
+    value: value || '',
+    onChange: e => onChange(e.target.value),
+    "aria-label": label,
+    style: {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%',
+      opacity: 0,
+      cursor: 'pointer',
+      fontSize: 16,
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "— vyber gumu —"), BANDS.map(x => /*#__PURE__*/React.createElement("option", {
+    key: x.k,
+    value: x.k
+  }, x.label, x.hi ? ' (' + x.lo + '–' + x.hi + ' kg)' : ''))));
+}
 function ExCard({
   ex,
   prev,
@@ -3114,10 +3291,18 @@ function ExCard({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [nm, setNm] = useState(ex.name);
-  const best = type === 'reps' ? {
+  const best = noKg(type) ? ex.sets.reduce((b, s) => {
+    const r = parseInt(s.reps) || 0;
+    return r > b.r ? {
+      w: 0,
+      r,
+      band: s.band || ''
+    } : b;
+  }, {
     w: 0,
-    r: ex.sets.reduce((m, s) => Math.max(m, parseInt(s.reps) || 0), 0)
-  } : ex.sets.reduce((b, s) => {
+    r: 0,
+    band: ''
+  }) : ex.sets.reduce((b, s) => {
     const w = parseFloat(s.weight) || 0;
     return w > b.w ? {
       w,
@@ -3204,12 +3389,12 @@ function ExCard({
       color: C.tx2,
       fontSize: 13
     }
-  }, kgTxt(best.w, type), " kg × ", best.r), type === 'reps' && best.r > 0 && /*#__PURE__*/React.createElement("span", {
+  }, kgTxt(best.w, type), " kg × ", best.r), noKg(type) && best.r > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.tx2,
       fontSize: 13
     }
-  }, best.r, " op.", ex.level ? ' · díra ' + ex.level : ''), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
+  }, best.r, " op.", type === 'reps' && ex.level ? ' · díra ' + ex.level : '', type === 'assist' && bandOf(best.band) ? ' · ' + bandOf(best.band).short : ''), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       background: C.ac1,
       color: C.ac,
@@ -3228,7 +3413,7 @@ function ExCard({
     style: {
       color: C.tx2
     }
-  }, prevBest.w > 0 && type !== 'reps' ? `${kgTxt(prevBest.w, type)} kg × ${prevBest.r}` : `${prevBest.r} op.`), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
+  }, prevBest.w > 0 && !noKg(type) ? `${kgTxt(prevBest.w, type)} kg × ${prevBest.r}` : `${prevBest.r} op.`), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.tx3,
       fontSize: 13,
@@ -3288,6 +3473,7 @@ function ExCard({
   }, /*#__PURE__*/React.createElement("div", {
     style: S.fieldLabel
   }, "TYP ZÁTĚŽE"), /*#__PURE__*/React.createElement(Seg, {
+    small: true,
     options: EX_TYPES,
     value: type,
     onChange: t => onSetType && onSetType(t)
@@ -3357,7 +3543,7 @@ function ExCard({
       gap: 6,
       marginBottom: 6
     }
-  }, (type === 'reps' ? ['#', 'OPAKOVÁNÍ', ''] : ['#', type === 'db2' ? 'KG · 1 ČINKA (2×)' : type === 'db1' ? 'KG · ČINKA' : 'KG', type === 'db1' ? 'REPS · OBĚ STRANY' : 'REPS', '']).map((h, i) => /*#__PURE__*/React.createElement("div", {
+  }, (type === 'reps' ? ['#', 'OPAKOVÁNÍ', ''] : type === 'assist' ? ['#', 'GUMA', 'OPAKOVÁNÍ', ''] : ['#', type === 'db2' ? 'KG · 1 ČINKA (2×)' : type === 'db1' ? 'KG · ČINKA' : 'KG', type === 'db1' ? 'REPS · OBĚ STRANY' : 'REPS', '']).map((h, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       color: C.tx3,
@@ -3384,7 +3570,12 @@ function ExCard({
       fontWeight: 700,
       fontFamily: F
     }
-  }, i + 1), type !== 'reps' && /*#__PURE__*/React.createElement("div", {
+  }, i + 1), type === 'assist' && /*#__PURE__*/React.createElement(BandSelect, {
+    value: s.band,
+    onChange: v => onUpdateSet(i, 'band', v),
+    check: s.check,
+    label: 'Guma, série ' + (i + 1)
+  }), !noKg(type) && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'relative'
     }
@@ -3787,7 +3978,7 @@ function DashTab({
   variant,
   onSaveBody
 }) {
-  const aBy = buildSessions(trainings);
+  const aBy = buildSessions(trainings, body);
   const aWeeks = weeklyStats(trainings, foodLog, body, aBy);
   const curW = Math.max(1, weekOf(today));
   const tw = aWeeks[curW],
@@ -3838,7 +4029,7 @@ function DashTab({
       if (!key) return;
       const t = exTypeOf(ex.name);
       if (isLegacyEx(ex)) ex = migrateExercise(ex);
-      const w = t === 'reps' ? 0 : ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
+      const w = noKg(t) ? 0 : ex.sets.reduce((b, s) => Math.max(b, parseFloat(s.weight) || 0), 0);
       const r = ex.sets.reduce((b, s) => Math.max(b, parseInt(s.reps) || 0), 0);
       const p = pr[key] || (pr[key] = {
         name: ex.name.trim(),
@@ -4901,9 +5092,13 @@ function DenikTab({
     const lastCur = e.sets[e.sets.length - 1];
     const p = !lastCur ? prevFor(e.name) : null;
     const src = lastCur || p && (p.sets[0] || null);
+    const nk = noKg(exTypeOf(e.name));
     const ns = src ? {
-      weight: exTypeOf(e.name) === 'reps' ? '' : String(src.weight ?? ''),
-      reps: String(src.reps ?? '')
+      weight: nk ? '' : String(src.weight ?? ''),
+      reps: String(src.reps ?? ''),
+      ...(src.band ? {
+        band: src.band
+      } : {})
     } : {
       weight: '',
       reps: ''
@@ -4947,11 +5142,13 @@ function DenikTab({
       const sets = (e.sets || []).map(x => Array.isArray(x) ? {
         weight: x[0] == null ? '' : String(x[0]),
         reps: x[1] == null ? '' : String(x[1]),
-        check: x[2] === '?' || x[2] === true
+        check: x[2] === '?' || x[2] === true,
+        band: typeof x[0] === 'string' ? bandKey(x[0]) : ''
       } : {
         weight: String(x.weight ?? x.w ?? ''),
         reps: String(x.reps ?? x.r ?? ''),
-        check: !!(x.check || x.uncertain)
+        check: !!(x.check || x.uncertain),
+        band: bandKey(x.band ?? x.guma ?? '')
       });
       const name = known[norm(raw)] || raw;
       let level = e.level != null && e.level !== '' ? String(e.level) : '';
@@ -4959,11 +5156,21 @@ function DenikTab({
       if (exTypeOf(name) === 'reps') sets2 = sets.map(x => {
         const w = parseFloat(x.weight) || 0;
         if (w > 0 && !level) level = String(w);
+        const {
+          band,
+          ...r
+        } = x;
         return {
-          ...x,
+          ...r,
           weight: ''
         };
-      });
+      });else if (exTypeOf(name) === 'assist') sets2 = sets.map(x => ({
+        ...x,
+        weight: ''
+      }));else sets2 = sets.map(({
+        band,
+        ...r
+      }) => r);
       return {
         name,
         sets: sets2,
@@ -5019,14 +5226,16 @@ function DenikTab({
     } = data;
     const next = [...((trainings[date] || {}).exercises || [])];
     list.forEach(ie => {
-      const sets = ie.sets.map(x => x.check ? {
+      const sets = ie.sets.map(x => ({
         weight: x.weight,
         reps: x.reps,
-        check: true
-      } : {
-        weight: x.weight,
-        reps: x.reps
-      });
+        ...(x.band ? {
+          band: x.band
+        } : {}),
+        ...(x.check ? {
+          check: true
+        } : {})
+      }));
       const i = next.findIndex(e => norm(e.name) === norm(ie.name));
       const lv = ie.level ? {
         level: ie.level
@@ -6855,7 +7064,7 @@ function ComboChart({
     }, sr.goalLabel || sr.goal)));
   }), lines.map(sr => {
     const Y = scaleOf(sr);
-    const pts = sr.values.map((v, i) => v != null && isFinite(v) && v > 0 ? [cx(i), Y(v), i] : null).filter(Boolean);
+    const pts = sr.values.map((v, i) => v != null && isFinite(v) && (v > 0 || sr.zeroOk) ? [cx(i), Y(v), i] : null).filter(Boolean);
     return /*#__PURE__*/React.createElement("g", {
       key: sr.key
     }, pts.length > 1 && /*#__PURE__*/React.createElement("path", {
@@ -6966,14 +7175,15 @@ function ProgressView({
     e1rm: true,
     vol: true,
     top: true,
-    tot: false
+    tot: false,
+    asst: true
   });
   const [act, setAct] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const [merge, setMerge] = useState(null);
   const stripRef = React.useRef(null);
   const today = ymd(new Date());
-  const by = buildSessions(trainings);
+  const by = buildSessions(trainings, body);
   const list = Object.values(by).filter(o => o.sessions.length);
   const ordered = GROUP_ORDER.flatMap(g => list.filter(x => x.group === g).sort((a, b) => a.name.localeCompare(b.name)));
   const dupes = findDuplicates(list);
@@ -7005,7 +7215,8 @@ function ProgressView({
   };
   let detail = null;
   if (o) {
-    const isReps = o.type === 'reps';
+    const isReps = noKg(o.type),
+      isAssist = o.type === 'assist';
     const defs = isReps ? [{
       key: 'top',
       label: 'Max. opakování',
@@ -7020,7 +7231,16 @@ function ProgressView({
       color: C.tx3,
       val: x => x.totReps,
       fmt: v => Math.round(v) + ' op.'
-    }] : [{
+    }, ...(isAssist ? [{
+      key: 'asst',
+      label: 'Pomoc gumy',
+      kind: 'line',
+      color: C.wa,
+      dash: '5 4',
+      zeroOk: true,
+      val: x => x.assist,
+      fmt: v => v == null ? '—' : v > 0 ? '~' + nf1(v) + ' kg' : 'bez gumy'
+    }] : [])] : [{
       key: 'e1rm',
       label: '1RM',
       kind: 'line',
@@ -7106,7 +7326,7 @@ function ProgressView({
         fontSize: 13,
         color: C.tx3
       }
-    }, isReps ? 'max. opakování' : 'odhad 1RM'), pct !== null && /*#__PURE__*/React.createElement("span", {
+    }, isReps ? 'max. opakování' + (isAssist && bandOf(lastS.topBand) ? ' · ' + bandOf(lastS.topBand).short : '') : 'odhad 1RM'), pct !== null && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 15,
         fontWeight: 600,
@@ -7133,6 +7353,7 @@ function ProgressView({
         kind: d.kind,
         color: d.color,
         dash: d.dash,
+        zeroOk: d.zeroOk,
         values: ss.map(d.val)
       }))
     }), cur && /*#__PURE__*/React.createElement("div", {
@@ -7160,12 +7381,17 @@ function ProgressView({
         color: C.tx2,
         fontSize: 14
       }
-    }, "nejlepší ", kgTxt(nf1(cur.bestW), o.type), " kg × ", cur.bestWR), isReps && cur.level && /*#__PURE__*/React.createElement("span", {
+    }, "nejlepší ", kgTxt(nf1(cur.bestW), o.type), " kg × ", cur.bestWR), isReps && !isAssist && cur.level && /*#__PURE__*/React.createElement("span", {
       style: {
         color: C.tx2,
         fontSize: 14
       }
-    }, "díra ", cur.level)), /*#__PURE__*/React.createElement("div", {
+    }, "díra ", cur.level), isAssist && cur.bands && cur.bands.length > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx2,
+        fontSize: 14
+      }
+    }, cur.bands.map(k => bandOf(k).short).join(', '))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         flexWrap: 'wrap',
@@ -7290,11 +7516,15 @@ function ProgressView({
         fontSize: 14,
         textAlign: 'right'
       }
-    }, x.topReps, x.level ? /*#__PURE__*/React.createElement("span", {
+    }, x.topReps, !isAssist && x.level ? /*#__PURE__*/React.createElement("span", {
       style: {
         color: C.tx3
       }
-    }, " · d", x.level) : ''), /*#__PURE__*/React.createElement("div", {
+    }, " · d", x.level) : '', isAssist && bandOf(x.topBand) ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3
+      }
+    }, " · ", bandOf(x.topBand).short) : ''), /*#__PURE__*/React.createElement("div", {
       key: i + 'b',
       style: {
         fontSize: 14,
@@ -7329,7 +7559,14 @@ function ProgressView({
         textAlign: 'right',
         color: C.tx2
       }
-    }, tFmt(x.vol))]))), !isReps && /*#__PURE__*/React.createElement("div", {
+    }, tFmt(x.vol))]))), isAssist && /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.tx3,
+        fontSize: 12,
+        marginTop: 10,
+        lineHeight: 1.4
+      }
+    }, "Pokrok = víc opakování nebo slabší guma. „Pomoc gumy“ je střed odporu gumy (např. černá 14–27 kg → ~20,5 kg) — čím níž, tím líp."), !isReps && /*#__PURE__*/React.createElement("div", {
       style: {
         color: C.tx3,
         fontSize: 12,
@@ -8048,7 +8285,7 @@ function WeeksView({
   body
 }) {
   const today = ymd(new Date());
-  const by = buildSessions(trainings);
+  const by = buildSessions(trainings, body);
   const weeks = weeklyStats(trainings, foodLog, body, by);
   const cur = Math.max(1, weekOf(today));
   const maxN = Math.max(cur, ...Object.keys(weeks).map(Number), 1);
