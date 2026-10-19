@@ -181,7 +181,9 @@ const DEFAULT_EX_TYPES = {
 // Starý zápis: tyto cviky se zapisovaly jako součet obou činek → při převodu ÷ 2
 const LEGACY_TOTAL = ['incline bench press', 'single squat'];
 let exTypeOverrides = {};
-const exTypeOf = name => exTypeOverrides[exNorm(name)] || DEFAULT_EX_TYPES[exNorm(name)] || 'bar';
+// Shyby poznáme i podle názvu („Shyby s gumou“, „Pull-ups“…), pokud typ nikdo ručně nezměnil
+const looksAssist = name => /shyb|pull.?ups?\b|chin.?ups?\b/.test(exNorm(name).normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+const exTypeOf = name => exTypeOverrides[exNorm(name)] || DEFAULT_EX_TYPES[exNorm(name)] || (looksAssist(name) ? 'assist' : 'bar');
 const volFactor = t => t === 'db2' ? 2 : noKg(t) ? 0 : 1;
 const exVolume = ex => volFactor(exTypeOf(ex.name)) * (ex.sets || []).reduce((a, x) => a + (parseFloat(x.weight) || 0) * (parseInt(x.reps) || 0), 0);
 const kgTxt = (w, t) => (t === 'db2' ? '2× ' : '') + String(w).replace('.', ',');
@@ -287,7 +289,7 @@ const weekOf = ds => Math.floor(daysBetween(PROGRAM_START, ds) / 7) + 1; // < 1 
 const weekStartD = n => addDays(parseD(PROGRAM_START), (n - 1) * 7);
 // Podobné názvy (Dead lift = Deadlift, RDL = Romanian deadlift, Dřep = Squat…)
 const compactKey = s => exNorm(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
-const ALIASES = [['shyby', 'shyb', 'pullups', 'pullup', 'pullupy'], ['romaniandeadlift', 'rdl', 'rumunskymrtvytah'], ['squat', 'drep'], ['deadlift', 'mrtvytah'], ['benchpress', 'bench'], ['militarypressdb', 'rotacnitlak', 'militarypressrotacnitlak'], ['lateralraise', 'lateral', 'lateralr'], ['deltflys', 'deltfly'], ['bicepscurl', 'bicepsovyzdvih', 'biceps']];
+const ALIASES = [['shyby', 'shyb', 'pullups', 'pullup', 'pullupy', 'shybysgumou', 'shybsgumou', 'shybygumy', 'asistovaneshyby'], ['romaniandeadlift', 'rdl', 'rumunskymrtvytah'], ['squat', 'drep'], ['deadlift', 'mrtvytah'], ['benchpress', 'bench'], ['militarypressdb', 'rotacnitlak', 'militarypressrotacnitlak'], ['lateralraise', 'lateral', 'lateralr'], ['deltflys', 'deltfly'], ['bicepscurl', 'bicepsovyzdvih', 'biceps']];
 const simKey = s => {
   const c = compactKey(s);
   const g = ALIASES.find(a => a.includes(c));
