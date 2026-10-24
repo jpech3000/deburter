@@ -614,6 +614,42 @@ function mergeTemplates(templates, src, dst) {
     };
   });
 }
+// Hledat a nahradit v názvech a poznámkách jídel (bez ohledu na velikost písmen, zachová velké první písmeno)
+function foodReplace(foodLog, find, repl) {
+  const f = String(find || '').trim(),
+    r = String(repl ?? '');
+  const hits = [];
+  if (!f) return {
+    next: foodLog || [],
+    hits
+  };
+  const re = new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+  const fix = t => String(t).replace(re, m => !r ? r : m === m.toUpperCase() && m !== m.toLowerCase() && m.length > 1 ? r.toUpperCase() : m.charAt(0) !== m.charAt(0).toLowerCase() ? r.charAt(0).toUpperCase() + r.slice(1) : r);
+  const next = (foodLog || []).map(e => {
+    if (!e) return e;
+    const name = e.name != null ? fix(e.name) : e.name,
+      note = e.note ? fix(e.note) : e.note;
+    if (name === e.name && note === e.note) return e;
+    hits.push({
+      id: e.id,
+      date: e.date,
+      before: e.name,
+      after: name,
+      noteChanged: note !== e.note
+    });
+    return {
+      ...e,
+      name,
+      ...(e.note !== undefined ? {
+        note
+      } : {})
+    };
+  });
+  return {
+    next,
+    hits
+  };
+}
 async function backupNamed(prefix, data) {
   const w = await api('/app_state', {
     method: 'POST',
@@ -6493,6 +6529,118 @@ function NakupTab({
 }
 
 // ── TAB: NASTAVENÍ ────────────────────────────────────────────────────────────
+function FoodReplaceCard({
+  foodLog,
+  onReplace
+}) {
+  const [find, setFind] = useState('');
+  const [repl, setRepl] = useState('');
+  const [conf, setConf] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const {
+    hits
+  } = foodReplace(foodLog, find, repl);
+  const go = async () => {
+    setConf(false);
+    setBusy(true);
+    setMsg('');
+    try {
+      const n = await onReplace(find, repl);
+      setMsg('Hotovo — upraveno ' + n + ' záznamů. Záloha je níže v Zálohách.');
+      setFind('');
+      setRepl('');
+    } catch (e) {
+      setMsg('Záloha se nepodařila, nic jsem nezměnil. (' + (e.message || e) + ')');
+    }
+    setBusy(false);
+  };
+  return cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: S.secLabel
+  }, "Upravit názvy jídel"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx2,
+      fontSize: 14,
+      lineHeight: 1.5,
+      marginBottom: 10
+    }
+  }, "Hledá v názvech i poznámkách všech jídel v historii. Velikost písmen nevadí, makra zůstanou beze změny. Před úpravou se uloží záloha."), /*#__PURE__*/React.createElement("div", {
+    style: S.fieldLabel
+  }, "HLEDAT"), /*#__PURE__*/React.createElement("input", {
+    value: find,
+    onChange: e => {
+      setFind(e.target.value);
+      setMsg('');
+    },
+    placeholder: "např. krůtí šunk",
+    autoCapitalize: "none",
+    style: {
+      ...inpS,
+      marginBottom: 8
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: S.fieldLabel
+  }, "NAHRADIT ZA"), /*#__PURE__*/React.createElement("input", {
+    value: repl,
+    onChange: e => {
+      setRepl(e.target.value);
+      setMsg('');
+    },
+    placeholder: "např. kuřecí šunk",
+    autoCapitalize: "none",
+    style: {
+      ...inpS,
+      marginBottom: 10
+    }
+  }), find.trim() && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf2,
+      borderRadius: 12,
+      padding: '10px 12px',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      marginBottom: hits.length ? 6 : 0
+    }
+  }, hits.length ? 'Najdu ' + hits.length + ' ' + (hits.length === 1 ? 'záznam' : hits.length <= 4 ? 'záznamy' : 'záznamů') : 'Nic nenalezeno'), hits.slice(0, 5).map(h => /*#__PURE__*/React.createElement("div", {
+    key: h.id,
+    style: {
+      fontSize: 13,
+      color: C.tx2,
+      lineHeight: 1.45
+    }
+  }, fmtD(h.date), " · ", h.before, " → ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: C.tx
+    }
+  }, h.after), h.noteChanged ? ' (+ poznámka)' : '')), hits.length > 5 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.tx3
+    }
+  }, "… a dalších ", hits.length - 5)), msg && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      color: msg.startsWith('Hotovo') ? C.ok : C.er,
+      marginBottom: 10
+    }
+  }, msg), /*#__PURE__*/React.createElement(Btn, {
+    sm: true,
+    dis: !hits.length || busy,
+    onClick: () => setConf(true)
+  }, busy ? 'Ukládám zálohu…' : hits.length ? 'Nahradit v ' + hits.length + ' záznamech' : 'Nahradit'), conf && /*#__PURE__*/React.createElement(ActionSheet, {
+    title: 'Nahradit v ' + hits.length + ' záznamech?',
+    message: '„' + find.trim() + '“ → „' + repl + '“. Před změnou se uloží záloha.',
+    confirmLabel: "Nahradit",
+    onConfirm: go,
+    onCancel: () => setConf(false)
+  })), {
+    marginBottom: 12
+  });
+}
 function NastaveniTab({
   variant,
   onSetVariant,
@@ -6501,7 +6649,8 @@ function NastaveniTab({
   currentData,
   onRestored,
   legacyCount,
-  onOpenMigration
+  onOpenMigration,
+  onReplaceFood
 }) {
   const [backups, setBackups] = useState(null);
   const [bErr, setBErr] = useState('');
@@ -6528,7 +6677,7 @@ function NastaveniTab({
     }
     setBusy(false);
   };
-  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : (k.startsWith('backup-pred-prevodem') ? 'Před převodem činek ' : k.startsWith('backup-pred-sloucenim') ? 'Před sloučením cviků ' : 'Před obnovou ') + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
+  const bLabel = k => k.startsWith('backup:') ? fmtD(k.slice(7)) + ' ' + k.slice(7, 11) : (k.startsWith('backup-pred-prevodem') ? 'Před převodem činek ' : k.startsWith('backup-pred-sloucenim') ? 'Před sloučením cviků ' : k.startsWith('backup-pred-upravou-jidel') ? 'Před úpravou jídel ' : 'Před obnovou ') + k.split(':').slice(1).join(':').slice(0, 16).replace('T', ' ');
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 34,
@@ -6585,6 +6734,9 @@ function NastaveniTab({
     onClick: onOpenMigration
   }, "Zobrazit náhled převodu")), {
     marginBottom: 12
+  }), /*#__PURE__*/React.createElement(FoodReplaceCard, {
+    foodLog: currentData['deburter:foodlog'],
+    onReplace: onReplaceFood
   }), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: S.secLabel
   }, "Export pro analýzu"), /*#__PURE__*/React.createElement("div", {
@@ -9613,6 +9765,17 @@ function App() {
     sSave('a12:exTypes', next);
   };
   const legacyCount = Object.entries(trainings).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k)).reduce((n, [, t]) => n + (t.exercises || []).filter(isLegacyEx).length, 0);
+  const replaceFood = async (find, repl) => {
+    await flushAll();
+    const {
+      next,
+      hits
+    } = foodReplace(live.current.foodLog, find, repl);
+    if (!hits.length) return 0;
+    await backupNamed('backup-pred-upravou-jidel', currentData); // bez zálohy se nic nezmění
+    saveFL(next);
+    return hits.length;
+  };
   const mergeExercises = async (src, dst) => {
     await flushAll();
     await backupNamed('backup-pred-sloucenim', currentData); // bez zálohy se nic nesloučí
@@ -9770,7 +9933,8 @@ function App() {
         onRestored: async () => {
           await reload(false);
           showToast('Záloha obnovena.');
-        }
+        },
+        onReplaceFood: replaceFood
       });
       break;
   }
