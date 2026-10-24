@@ -4165,9 +4165,7 @@ function DashTab({
       fontSize: 12,
       marginTop: 6
     }
-  }, wp, "% programu · start 7. 9. 2026")), /*#__PURE__*/React.createElement(LiftTrivia, {
-    totalKg: vol
-  }), /*#__PURE__*/React.createElement("div", {
+  }, wp, "% programu · start 7. 9. 2026")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sf,
       borderRadius: 16,
@@ -4567,7 +4565,9 @@ function DashTab({
       color: C.tx2,
       fontSize: 13
     }
-  }, "Po konzultaci nastav variantu v Nastavení.")));
+  }, "Po konzultaci nastav variantu v Nastavení.")), /*#__PURE__*/React.createElement(LiftTrivia, {
+    totalKg: vol
+  }));
 }
 
 // ── TAB: ÚKOLY ────────────────────────────────────────────────────────────────
@@ -6779,52 +6779,52 @@ function NastaveniTab({
 
 // ── TRIVIA: nazvedáno a snědeno v přepočtu (přibližné hodnoty, pro radost) ──
 const LIFT_TRIVIA = [{
-  e: '🚗',
+  e: 'car',
   one: 'osobní auto',
   many: 'osobních aut',
   kg: 1400
 }, {
-  e: '🐘',
+  e: 'elephant',
   one: 'slon africký',
   many: 'slonů',
   kg: 6000
 }, {
-  e: '🦖',
+  e: 'dino',
   one: 'T-rex',
   many: 'T-rexů',
   kg: 8000
 }, {
-  e: '🚛',
+  e: 'truck',
   one: 'naložený kamion',
   many: 'kamionů',
   kg: 40000
 }, {
-  e: '🚂',
+  e: 'train',
   one: 'lokomotiva',
   many: 'lokomotiv',
   kg: 85000
 }, {
-  e: '🐋',
+  e: 'whale',
   one: 'plejtvák obrovský',
   many: 'plejtváků',
   kg: 150000
 }, {
-  e: '✈️',
+  e: 'plane',
   one: 'Boeing 747 (prázdný)',
   many: 'Boeingů 747',
   kg: 180000
 }, {
-  e: '🗽',
+  e: 'liberty',
   one: 'Socha svobody',
   many: 'Soch svobody',
   kg: 225000
 }, {
-  e: '🛰️',
+  e: 'iss',
   one: 'vesmírná stanice ISS',
   many: 'ISS',
   kg: 420000
 }, {
-  e: '🗼',
+  e: 'eiffel',
   one: 'Eiffelova věž',
   many: 'Eiffelovek',
   kg: 7300000
@@ -6832,35 +6832,35 @@ const LIFT_TRIVIA = [{
 // Maso z jídel: odhad z bílkovin (≈85 % bílkovin jídla z masa / obsah bílkovin v mase), jedlé maso na zvíře
 const FOOD_TRIVIA = [{
   k: 'turkey',
-  e: '🦃',
+  e: 'turkey',
   many: 'krocanů',
   meatKg: 6,
   dens: 0.24,
   re: /krut|krocan|turkey/
 }, {
   k: 'chicken',
-  e: '🐔',
+  e: 'chicken',
   many: 'kuřat',
   meatKg: 1.2,
   dens: 0.23,
   re: /kure|kurec|kurat|chicken/
 }, {
   k: 'pig',
-  e: '🐷',
+  e: 'pig',
   many: 'selat',
   meatKg: 8,
   dens: 0.21,
   re: /vepr|sele|prase|panenk|slanin|sunk|bacon|pork|kotlet/
 }, {
   k: 'calf',
-  e: '🐮',
+  e: 'cow',
   many: 'telat',
   meatKg: 100,
   dens: 0.22,
   re: /hovez|tele|steak|burger|roastbeef|svickov|beef|biftek/
 }, {
   k: 'fish',
-  e: '🐟',
+  e: 'fish',
   many: 'ryb',
   meatKg: 0.5,
   dens: 0.20,
@@ -6895,38 +6895,336 @@ function foodTrivia(foodLog) {
   };
 }
 const cntFmt = n => n >= 100 ? String(Math.round(n)) : n >= 10 ? nf1(n) : String(Math.round(n * 100) / 100).replace('.', ',');
-// Řada symbolů: celé kusy + poslední „rozpracovaný“ průhledně
-function EmojiRow({
-  e,
-  n,
-  max
+// Linkové ikony (jednotná čára, zaoblené konce) — vlastní kresba ve stylu food/line icon sad
+const TRIVIA_ICONS = {
+  car: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M3 15.5V13l2-1.1 2.2-4.1h8.6l3.2 4.1 2 .8v2.8a1 1 0 0 1-1 1h-1.2M6.2 16.5H4a1 1 0 0 1-1-1M9.8 16.5h4.4M7.6 11.9h10.6M11.8 7.9v4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "8",
+    cy: "16.6",
+    r: "1.8"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "16",
+    cy: "16.6",
+    r: "1.8"
+  })),
+  elephant: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M16.5 10c0-2.8-2.4-4.8-5.6-4.8C7.4 5.2 4.8 7.5 4.8 11v7h2.6v-3h5v3H15v-5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M16.5 10c1.6.2 2.6 1.4 2.6 3v4.2c0 .9.6 1.5 1.4 1.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M13.6 7.6c-1.3.7-1.8 2.2-1.2 3.5.5 1 1.6 1.5 2.7 1.2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "15.6",
+    cy: "9.2",
+    r: ".5",
+    fill: "currentColor",
+    stroke: "none"
+  })),
+  dino: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M2.5 14.2c2.5-.2 4.6-1.6 6.6-3.3 1.5-1.3 2.9-2.8 3.9-4.4V4.8c0-.7.6-1.3 1.3-1.3h4.9c.7 0 1.3.6 1.3 1.3v1.6c0 .6-.5 1.1-1.1 1.1h-2.9l-.6 3c-.3 1.6-.9 3-2 4.1l-1.4 1.4 1 3.6M2.5 14.2c2 .8 4.5 1 6.8.4l-.8 4.7M15.4 11.4h1.7M16.6 6.4h3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "16.1",
+    cy: "5.1",
+    r: ".5",
+    fill: "currentColor",
+    stroke: "none"
+  })),
+  truck: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "2.5",
+    y: "6",
+    width: "11.5",
+    height: "10.5",
+    rx: "1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M14 9.5h3.6l2.9 3.5v3.5H14"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "6.5",
+    cy: "17.3",
+    r: "1.8"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "17",
+    cy: "17.3",
+    r: "1.8"
+  })),
+  train: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M4 16V9.5h3.5V6.5h5v3h5l2.5 3.8V16M12.5 9.5v4H20M3 16h18M5.5 6.5h4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "7",
+    cy: "18.2",
+    r: "1.6"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "18.2",
+    r: "1.6"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "17",
+    cy: "18.2",
+    r: "1.6"
+  })),
+  whale: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M2.8 12.5c0 3.2 3.2 5.3 8.2 5.3 5.6 0 8.6-3 9.2-7l1.4-2.4-2.7.5c-.6-.6-1.3-.6-1.8 0l-1.4 1.6c-1 1.1-2.4 1.5-3.9 1.5H2.8z"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "7",
+    cy: "14.2",
+    r: ".5",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M10 9.3V6.8M10 6.8c0-1.1.9-2 2-2M10 6.8c0-1.1-.9-2-2-2"
+  })),
+  plane: /*#__PURE__*/React.createElement("path", {
+    d: "M21 15.5l-8-4.6V5.4a1.5 1.5 0 0 0-3 0v5.5L2 15.5V17l8-2.4v4.6l-2.4 1.5V22l3.9-1 3.9 1v-1.3L13 19.2v-4.6l8 2.4z"
+  }),
+  liberty: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M8.5 21.5h7M10 21.5l.6-6.3h2.8l.6 6.3"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M10.6 15.2c-1-1-1.6-2.5-1.6-4 0-1.7 1.3-3 3-3s3 1.3 3 3c0 1.5-.6 3-1.6 4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M9.4 8.7L7.8 6.6M12 8.2V5.6M14.6 8.7l1.6-2.1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M15.2 11.6L18 5.4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M17.3 4c.3-.9 1.1-1.5 1.5-1.7.3.6.3 1.6-.4 2.3"
+  })),
+  iss: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "9",
+    y: "9",
+    width: "6",
+    height: "6",
+    rx: "1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M9 12H6M15 12h3M12 9V6.5M12 15v2.5"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "2",
+    y: "8.5",
+    width: "4",
+    height: "7",
+    rx: ".5"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "18",
+    y: "8.5",
+    width: "4",
+    height: "7",
+    rx: ".5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M2 12h4M18 12h4"
+  })),
+  eiffel: /*#__PURE__*/React.createElement("path", {
+    d: "M12 2v3M10.6 5h2.8M10.6 5L9.2 11h5.6L13.4 5M8.3 11h7.4M9.2 11L6 22M14.8 11L18 22M7.6 16.2h8.8M10 22c0-1.6.9-2.7 2-2.7s2 1.1 2 2.7"
+  }),
+  turkey: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M4.5 15c0-3.6 3.2-6.3 7.5-6.3s7.5 2.7 7.5 6.3c0 1.8-1.4 3.2-3.2 3.2H7.7c-1.8 0-3.2-1.4-3.2-3.2z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3 20.5h18M15.4 9.6l2.4-3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "18.6",
+    cy: "5.2",
+    r: "1.1"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "19.4",
+    cy: "6.6",
+    r: "1.1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M8.6 9.6l-2.4-3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "5.4",
+    cy: "5.2",
+    r: "1.1"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "4.6",
+    cy: "6.6",
+    r: "1.1"
+  })),
+  chicken: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M13.9 13.9c-2.5 2.5-6.3 2.7-8.2.8s-1.7-5.7.8-8.2 6.3-2.7 8.2-.8 1.7 5.7-.8 8.2z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M13.9 13.9l3.2 3.2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "18.7",
+    cy: "16.6",
+    r: "1.4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "16.6",
+    cy: "18.7",
+    r: "1.4"
+  })),
+  pig: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "13",
+    r: "7"
+  }), /*#__PURE__*/React.createElement("ellipse", {
+    cx: "12",
+    cy: "15.3",
+    rx: "2.7",
+    ry: "1.9"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "11",
+    cy: "15.3",
+    r: ".4",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "13",
+    cy: "15.3",
+    r: ".4",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M6.6 8.4L5.6 4.8l3.4 1.4M17.4 8.4l1-3.6-3.4 1.4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "9.4",
+    cy: "11",
+    r: ".55",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "14.6",
+    cy: "11",
+    r: ".55",
+    fill: "currentColor",
+    stroke: "none"
+  })),
+  cow: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M7 13V8c0-1.7 2.2-3 5-3s5 1.3 5 3v5M7 8.5H4.6C3.7 8.5 3 7.8 3 7M17 8.5h2.4c.9 0 1.6-.7 1.6-1.5M8.2 5.6L7.4 3M15.8 5.6l.8-2.6"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "6.5",
+    y: "13",
+    width: "11",
+    height: "6.5",
+    rx: "3.2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "10",
+    cy: "16.2",
+    r: ".45",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "14",
+    cy: "16.2",
+    r: ".45",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "9.6",
+    cy: "10.2",
+    r: ".55",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "14.4",
+    cy: "10.2",
+    r: ".55",
+    fill: "currentColor",
+    stroke: "none"
+  })),
+  fish: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M2.5 12c2.4-3.4 5.9-5 9.4-5 3 0 5.5 1.9 6.6 5-1.1 3.1-3.6 5-6.6 5-3.5 0-7-1.6-9.4-5z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M18.5 12l3-3.2v6.4z"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "6.6",
+    cy: "11.2",
+    r: ".55",
+    fill: "currentColor",
+    stroke: "none"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M9.6 9.4c.8 1.6.8 3.6 0 5.2"
+  })),
+  dumbbell: /*#__PURE__*/React.createElement("path", {
+    d: "M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"
+  }),
+  cloche: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M3 17.5h18M4.2 17.5a7.8 7.8 0 0 1 15.6 0M12 9.7V8M10.6 8h2.8M2.5 20h19"
+  })),
+  muscle: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M4.5 20.5c0-3.4 1-6.4 2.6-8.8L9.6 6.4 12.7 5l1.6 1.6-2.4 3 1 2.1c2.6-1.6 6-1.1 7 2 1.1 3.6-2.1 6.8-6 6.8z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M14.5 15.5c1.1-.7 2.4-.7 3.3 0"
+  })),
+  choco: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "6",
+    y: "3",
+    width: "12",
+    height: "18",
+    rx: "1.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M6 9h12M6 15h12M12 3v18"
+  }))
+};
+function TIcon({
+  k,
+  size
 }) {
-  const m = max || 10,
-    full = Math.min(Math.floor(n), m),
-    part = n < m ? n - Math.floor(n) : 0;
-  return /*#__PURE__*/React.createElement("span", {
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size || 26,
+    height: size || 26,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     "aria-hidden": "true",
     style: {
-      fontSize: 20,
-      lineHeight: 1,
-      letterSpacing: 1,
-      whiteSpace: 'nowrap'
+      display: 'block'
     }
-  }, Array.from({
-    length: full
-  }).map((_, i) => /*#__PURE__*/React.createElement("span", {
-    key: i
-  }, e)), (part > 0.05 || full === 0) && /*#__PURE__*/React.createElement("span", {
+  }, TRIVIA_ICONS[k]);
+}
+const iconTile = k => /*#__PURE__*/React.createElement("div", {
+  style: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: C.ac1,
+    color: C.ac,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  }
+}, /*#__PURE__*/React.createElement(TIcon, {
+  k: k
+}));
+function TriviaRow({
+  icon,
+  title,
+  sub,
+  count,
+  first
+}) {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
-      opacity: 0.25 + Math.min(part, 1) * 0.5
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      padding: '9px 0',
+      borderTop: first ? 'none' : '0.5px solid ' + C.hair
     }
-  }, e), n > m && /*#__PURE__*/React.createElement("span", {
+  }, iconTile(icon), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500
+    }
+  }, title), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: C.tx3,
-      marginLeft: 4
+      marginTop: 1
     }
-  }, "+", Math.floor(n) - m));
+  }, sub)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      fontFamily: F,
+      flexShrink: 0
+    }
+  }, count));
 }
 function LiftTrivia({
   totalKg
@@ -6943,58 +7241,42 @@ function LiftTrivia({
       background: C.sf,
       borderRadius: 16,
       padding: '14px 16px',
+      marginTop: 16,
       marginBottom: 12
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      ...S.secLabel,
-      marginBottom: 6
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      color: C.tx3,
+      marginBottom: 4
     }
-  }, "🏋️ Nazvedáno v přepočtu"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(TIcon, {
+    k: "dumbbell",
+    size: 18
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...S.secLabel,
+      margin: 0
+    }
+  }, "Nazvedáno v přepočtu")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 30,
       fontWeight: 700,
       fontFamily: F,
       color: C.ac,
       letterSpacing: '-0.5px',
-      marginBottom: 10
+      marginBottom: 6
     }
-  }, tFmt(totalKg)), shown.map((r, i) => /*#__PURE__*/React.createElement("div", {
+  }, tFmt(totalKg)), shown.map((r, i) => /*#__PURE__*/React.createElement(TriviaRow, {
     key: r.one,
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      padding: '8px 0',
-      borderTop: i ? '0.5px solid ' + C.hair : 'none'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement(EmojiRow, {
-    e: r.e,
-    n: r.n,
-    max: 8
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.tx3,
-      marginTop: 3
-    }
-  }, r.n >= 1 ? r.many : r.one, " · ", tFmt(r.kg))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      fontFamily: F,
-      flexShrink: 0
-    }
-  }, cntFmt(r.n), "×"))), next && /*#__PURE__*/React.createElement("div", {
+    first: i === 0,
+    icon: r.e,
+    title: r.n >= 1 ? r.many : r.one,
+    sub: '≈ ' + tFmt(r.kg) + ' / kus',
+    count: cntFmt(r.n) + '×'
+  })), next && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: C.sf2,
@@ -7004,15 +7286,27 @@ function LiftTrivia({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      justifyContent: 'space-between',
-      fontSize: 14,
-      marginBottom: 6
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 8
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Další cíl: ", /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 18
+      color: C.ac
     }
-  }, next.e), " ", next.one), /*#__PURE__*/React.createElement("b", null, Math.floor(next.n * 100), " %")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(TIcon, {
+    k: next.e,
+    size: 22
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      fontSize: 14
+    }
+  }, "Další cíl: ", next.one), /*#__PURE__*/React.createElement("b", {
+    style: {
+      fontSize: 14
+    }
+  }, Math.floor(next.n * 100), " %")), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 6,
       borderRadius: 3,
@@ -7053,91 +7347,44 @@ function FoodTrivia({
   })).filter(r => r.meals > 0);
   return cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
-      ...S.secLabel,
-      marginBottom: 6
-    }
-  }, "🍽️ Snědeno od startu v přepočtu"), rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
-    key: r.k,
-    style: {
       display: 'flex',
       alignItems: 'center',
-      gap: 10,
-      padding: '8px 0',
-      borderTop: i ? '0.5px solid ' + C.hair : 'none'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement(EmojiRow, {
-    e: r.e,
-    n: r.n,
-    max: 8
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.tx3,
-      marginTop: 3
-    }
-  }, r.many, " · ≈ ", nf1(r.meat), " kg masa z ", r.meals, " jídel")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      fontFamily: F,
-      flexShrink: 0
-    }
-  }, cntFmt(r.n), "×"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
       gap: 8,
-      marginTop: 10
+      color: C.tx3,
+      marginBottom: 4
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(TIcon, {
+    k: "cloche",
+    size: 18
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
-      flex: 1,
-      background: C.sf2,
-      borderRadius: 12,
-      padding: '10px 12px'
+      ...S.secLabel,
+      margin: 0
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700
-    }
-  }, "💪 ", nf1(t.protein / 1000), " kg"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: C.tx3
-    }
-  }, "čistých bílkovin")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: C.sf2,
-      borderRadius: 12,
-      padding: '10px 12px'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700
-    }
-  }, "🍫 ", Math.round(t.kcal / 540)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: C.tx3
-    }
-  }, "tabulek čokolády energie"))), rows.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Snědeno od startu v přepočtu")), rows.map((r, i) => /*#__PURE__*/React.createElement(TriviaRow, {
+    key: r.k,
+    first: i === 0,
+    icon: r.e,
+    title: r.many.charAt(0).toUpperCase() + r.many.slice(1),
+    sub: '≈ ' + nf1(r.meat) + ' kg masa · ' + r.meals + ' jídel',
+    count: cntFmt(r.n) + '×'
+  })), rows.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.tx3,
       fontSize: 14,
-      marginTop: 8
+      margin: '6px 0'
     }
-  }, "V názvech jídel jsem zatím nenašel maso."), /*#__PURE__*/React.createElement("div", {
+  }, "V názvech jídel jsem zatím nenašel maso."), /*#__PURE__*/React.createElement(TriviaRow, {
+    icon: "muscle",
+    title: "Čisté bílkoviny",
+    sub: "součet ze všech jídel",
+    count: nf1(t.protein / 1000) + ' kg'
+  }), /*#__PURE__*/React.createElement(TriviaRow, {
+    icon: "choco",
+    title: "Tabulek čokolády",
+    sub: "stejná energie (100 g ≈ 540 kcal)",
+    count: String(Math.round(t.kcal / 540))
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: C.tx3,
@@ -7145,6 +7392,7 @@ function FoodTrivia({
       lineHeight: 1.4
     }
   }, "Odhad z názvu a bílkovin jídla. Jedlé maso: kuře ~1,2 kg, sele ~8 kg, tele ~100 kg, krocan ~6 kg, ryba ~0,5 kg. Celkem ≈ ", nf1(meatTotal), " kg masa.")), {
+    marginTop: 4,
     marginBottom: 12
   });
 }
@@ -8226,9 +8474,7 @@ function FoodAnalytics({
       marginTop: 2
     }
   }, l, sub ? /*#__PURE__*/React.createElement("span", null, " · ", sub) : null));
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(FoodTrivia, {
-    foodLog: foodLog
-  }), /*#__PURE__*/React.createElement(Seg, {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Seg, {
     options: [['7d', '7 dní'], ['4w', '4 týdny'], ['all', 'Celý program']],
     value: range,
     onChange: setRange,
@@ -8446,7 +8692,9 @@ function FoodAnalytics({
       fontSize: 14,
       flexShrink: 0
     }
-  }, f.n, "× · Ø ", Math.round(f.p / f.n), " g B"))))));
+  }, f.n, "× · Ø ", Math.round(f.p / f.n), " g B"))))), /*#__PURE__*/React.createElement(FoodTrivia, {
+    foodLog: foodLog
+  }));
 }
 function MergeSheet({
   names,
