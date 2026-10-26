@@ -6932,9 +6932,9 @@ function NastaveniTab({
 // ── TRIVIA: nazvedáno a snědeno v přepočtu (přibližné hodnoty, pro radost) ──
 const LIFT_TRIVIA = [{
   e: 'car',
-  one: 'osobní auto',
-  many: 'osobních aut',
-  kg: 1400
+  one: 'Škoda Fabia',
+  many: 'Škoda Fabia',
+  kg: 1150
 }, {
   e: 'elephant',
   one: 'slon africký',
@@ -7019,6 +7019,48 @@ const FOOD_TRIVIA = [{
   re: /treska|losos|tunak|candat|tilapi|ryb|pstruh|makrel|fish|salmon/
 }];
 const foodKey = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+// Vejce: počet z názvu („3 vejce“, „ze 4 vajec“, „2 bílky“, „vejce (3 ks)“), jinak odhad z bílkovin (~7 g na vejce)
+const CZ_NUM = {
+  jedno: 1,
+  jedna: 1,
+  jeden: 1,
+  dve: 2,
+  dva: 2,
+  tri: 3,
+  ctyri: 4,
+  pet: 5,
+  sest: 6
+};
+const EGG_RE = /vejc|vajec|vajic|omelet|bilek|bilk|egg/;
+function eggCount(txt) {
+  let n = 0,
+    found = false,
+    m;
+  const a = /(\d+|jedno|jedna|jeden|dve|dva|tri|ctyri|pet|sest)\s*(?:ks\s*)?(?:cel[aeyi]+\s*)?(?:vejc|vajec|vajic|vajick|bilek|bilk|egg)/g;
+  while (m = a.exec(txt)) {
+    n += /\d/.test(m[1]) ? parseInt(m[1]) : CZ_NUM[m[1]];
+    found = true;
+  }
+  if (!found) {
+    const b = /(?:vejc|vajic|vajec|bilk)\w*\s*\(?\s*(\d+)\s*ks/.exec(txt);
+    if (b) {
+      n = parseInt(b[1]);
+      found = true;
+    }
+  }
+  return found ? n : null;
+}
+function eggsIn(e) {
+  const nm = foodKey(e.name),
+    nt = foodKey(e.note);
+  if (!EGG_RE.test(nm + ' ' + nt)) return 0;
+  const c = eggCount(nm);
+  if (c != null) return Math.min(c, 30);
+  const c2 = eggCount(nt);
+  if (c2 != null) return Math.min(c2, 30);
+  const p = parseFloat(e.protein) || 0;
+  return EGG_RE.test(nm) ? Math.min(6, Math.max(1, Math.round(p * 0.8 / 7))) : 0; // jen poznámka bez počtu → nepočítat
+}
 function foodTrivia(foodLog) {
   const out = {};
   FOOD_TRIVIA.forEach(f => {
@@ -7028,12 +7070,19 @@ function foodTrivia(foodLog) {
     };
   });
   let protein = 0,
-    kcal = 0;
+    kcal = 0,
+    eggs = 0,
+    eggMeals = 0;
   (foodLog || []).forEach(e => {
     if (!e) return;
     const p = parseFloat(e.protein) || 0;
     protein += p;
     kcal += kcalOf(e);
+    const eg = eggsIn(e);
+    if (eg > 0) {
+      eggs += eg;
+      eggMeals++;
+    }
     const f = FOOD_TRIVIA.find(x => x.re.test(foodKey(e.name)));
     if (f && p > 0) {
       out[f.k].meat += p * 0.85 / f.dens / 1000;
@@ -7043,7 +7092,9 @@ function foodTrivia(foodLog) {
   return {
     by: out,
     protein,
-    kcal
+    kcal,
+    eggs,
+    eggMeals
   };
 }
 const cntFmt = n => n >= 100 ? String(Math.round(n)) : n >= 10 ? nf1(n) : String(Math.round(n * 100) / 100).replace('.', ',');
@@ -7294,6 +7345,11 @@ const TRIVIA_ICONS = {
   }), /*#__PURE__*/React.createElement("path", {
     d: "M14.5 15.5c1.1-.7 2.4-.7 3.3 0"
   })),
+  egg: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M12 3c-3.4 0-6.2 5-6.2 9.6 0 4.2 2.8 7.4 6.2 7.4s6.2-3.2 6.2-7.4C18.2 8 15.4 3 12 3z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M9.2 13.4c.1 1.6 1 2.8 2.3 3.2"
+  })),
   choco: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
     x: "6",
     y: "3",
@@ -7526,7 +7582,12 @@ function FoodTrivia({
       fontSize: 14,
       margin: '6px 0'
     }
-  }, "V názvech jídel jsem zatím nenašel maso."), /*#__PURE__*/React.createElement(TriviaRow, {
+  }, "V názvech jídel jsem zatím nenašel maso."), t.eggs > 0 && /*#__PURE__*/React.createElement(TriviaRow, {
+    icon: "egg",
+    title: "Vajec",
+    sub: '≈ ' + nf1(t.eggs * 0.06) + ' kg · ' + t.eggMeals + ' jídel',
+    count: String(Math.round(t.eggs))
+  }), /*#__PURE__*/React.createElement(TriviaRow, {
     icon: "muscle",
     title: "Čisté bílkoviny",
     sub: "součet ze všech jídel",
@@ -7543,7 +7604,7 @@ function FoodTrivia({
       marginTop: 8,
       lineHeight: 1.4
     }
-  }, "Odhad z názvu a bílkovin jídla. Jedlé maso: kuře ~1,2 kg, sele ~8 kg, tele ~100 kg, krocan ~6 kg, ryba ~0,5 kg. Celkem ≈ ", nf1(meatTotal), " kg masa.")), {
+  }, "Odhad z názvu a bílkovin jídla. Vejce podle počtu v názvu (jinak ~7 g bílkovin na vejce). Jedlé maso: kuře ~1,2 kg, sele ~8 kg, tele ~100 kg, krocan ~6 kg, ryba ~0,5 kg. Celkem ≈ ", nf1(meatTotal), " kg masa.")), {
     marginTop: 4,
     marginBottom: 12
   });
