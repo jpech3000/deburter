@@ -670,8 +670,9 @@ async function backupNamed(prefix, data) {
 
 // ── EXPORT ────────────────────────────────────────────────────────────────────
 function weeklyMarkdown(data, todayStr) {
+  const skip = new Set(data['deburter:foodSkip'] || []);
   const tr = data['a12:trainings'] || {},
-    fl = data['deburter:foodlog'] || [],
+    fl = (data['deburter:foodlog'] || []).filter(e => !(e && skip.has(e.date))),
     bd = data['a12:body'] || [];
   const by = buildSessions(tr, bd),
     weeks = weeklyStats(tr, fl, bd, by);
@@ -1974,7 +1975,7 @@ const SB_BASE = 'https://infkvxltifdatugjudwt.supabase.co';
 const SB_URL = SB_BASE + '/rest/v1';
 const SB_KEY = 'sb_publishable_Zf2UBPHLnYe4ep2U2LTsVQ_5u8FxFJy';
 const SESSION_KEY = 'deburter:session';
-const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body', 'a12:exTypes'];
+const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body', 'a12:exTypes', 'deburter:foodSkip'];
 const BACKUP_KEEP = 30;
 class AuthError extends Error {}
 let session = null;
@@ -4014,10 +4015,13 @@ function DashTab({
   foodLog,
   body,
   variant,
-  onSaveBody
+  onSaveBody,
+  foodSkip
 }) {
+  const skipSet = new Set(foodSkip || []);
+  const statLog = (foodLog || []).filter(e => !(e && skipSet.has(e.date)));
   const aBy = buildSessions(trainings, body);
-  const aWeeks = weeklyStats(trainings, foodLog, body, aBy);
+  const aWeeks = weeklyStats(trainings, statLog, body, aBy);
   const curW = Math.max(1, weekOf(today));
   const tw = aWeeks[curW],
     lw = aWeeks[curW - 1];
@@ -4056,8 +4060,8 @@ function DashTab({
   const dayProtein = Math.round(dayLog.reduce((s, e) => s + (parseFloat(e.protein) || 0), 0));
   const protPct = Math.min(100, Math.round(dayProtein / PROTEIN_GOAL * 100));
   const protLeft = Math.max(0, PROTEIN_GOAL - dayProtein);
-  const pastDays = [...new Set((foodLog || []).filter(e => e.date < today).map(e => e.date))];
-  const avgProtein = pastDays.length > 0 ? Math.round(pastDays.reduce((sum, d) => sum + (foodLog || []).filter(e => e.date === d).reduce((s, e) => s + (parseFloat(e.protein) || 0), 0), 0) / pastDays.length) : null;
+  const pastDays = [...new Set(statLog.filter(e => e.date < today).map(e => e.date))]; // bez dnů označených jako služebka
+  const avgProtein = pastDays.length > 0 ? Math.round(pastDays.reduce((sum, d) => sum + statLog.filter(e => e.date === d).reduce((s, e) => s + (parseFloat(e.protein) || 0), 0), 0) / pastDays.length) : null;
 
   // Osobní rekordy — maximum za celou historii (u vlastní váhy max. opakování)
   const pr = {};
@@ -4360,29 +4364,9 @@ function DashTab({
       color: C.tx2,
       fontSize: 15
     }
-  }, "Zatím žádné měření."), bSeries.length >= 2 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, /*#__PURE__*/React.createElement(LineChart, {
-    pts: bSeries.map(p => ({
-      x: p.x,
-      y: p.y
-    })),
-    avg: bSeries.map(p => ({
-      x: p.x,
-      y: p.avg
-    })),
-    color: C.bl,
-    height: 120,
-    label: "Hmotnost v čase"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: C.tx3,
-      fontSize: 12,
-      marginTop: 4
-    }
-  }, "Plná čára = měření · přerušovaná = průměr za 7 dní")), needMeasure && /*#__PURE__*/React.createElement("div", {
+  }, "Zatím žádné měření."), /*#__PURE__*/React.createElement(BodyChart, {
+    body: body
+  }), needMeasure && /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.ac,
       fontSize: 13,
@@ -5765,8 +5749,12 @@ function JidloTab({
   foodLog,
   onSave,
   onDeleteEntry,
-  body
+  body,
+  foodSkip,
+  onToggleSkip
 }) {
+  const skipSet = new Set(foodSkip || []);
+  const statLog = foodLog.filter(e => !(e && skipSet.has(e.date)));
   const [jv, setJv] = useState('log');
   const [selDate, setSelDate] = useState(today);
   const [adding, setAdding] = useState(false);
@@ -5903,9 +5891,10 @@ function JidloTab({
       lineHeight: 1.15
     }
   }, "Jídelní log"), jSeg, /*#__PURE__*/React.createElement(FoodAnalytics, {
-    foodLog: foodLog,
+    foodLog: statLog,
     body: body,
-    today: today
+    today: today,
+    skipDays: foodSkip || []
   }));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5957,12 +5946,83 @@ function JidloTab({
       fontSize: 13,
       background: '' + C.ac2 + ''
     }
-  }, "Dnes")), /*#__PURE__*/React.createElement("div", {
+  }, "Dnes")), (() => {
+    const isSkip = skipSet.has(selDate);
+    return /*#__PURE__*/React.createElement("button", {
+      role: "switch",
+      "aria-checked": isSkip,
+      onClick: () => onToggleSkip && onToggleSkip(selDate),
+      style: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        background: isSkip ? C.ac1 : C.sf,
+        border: 'none',
+        borderRadius: 16,
+        padding: '12px 16px',
+        marginBottom: 12,
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontFamily: F,
+        color: C.tx
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: isSkip ? C.ac : C.tx3,
+        display: 'flex'
+      }
+    }, /*#__PURE__*/React.createElement(TIcon, {
+      k: "suitcase",
+      size: 24
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 16,
+        fontWeight: 500
+      }
+    }, "Služebka"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 13,
+        color: isSkip ? C.ac : C.tx3
+      }
+    }, isSkip ? 'Den ' + fmtD(selDate) + ' se nezapočítává do statistik a průměrů' : 'Vynechat ' + fmtD(selDate) + ' ze statistik a průměrů')), /*#__PURE__*/React.createElement("span", {
+      "aria-hidden": "true",
+      style: {
+        width: 51,
+        height: 31,
+        borderRadius: 16,
+        background: isSkip ? C.ok : C.sf3,
+        position: 'relative',
+        flexShrink: 0,
+        transition: 'background .2s'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        position: 'absolute',
+        top: 2,
+        left: isSkip ? 22 : 2,
+        width: 27,
+        height: 27,
+        borderRadius: 14,
+        background: '#fff',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+        transition: 'left .2s'
+      }
+    })));
+  })(), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sf,
       borderRadius: 16,
       padding: '14px 16px',
-      marginBottom: 12
+      marginBottom: 12,
+      opacity: skipSet.has(selDate) ? 0.55 : 1
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7350,6 +7410,15 @@ const TRIVIA_ICONS = {
   }), /*#__PURE__*/React.createElement("path", {
     d: "M9.2 13.4c.1 1.6 1 2.8 2.3 3.2"
   })),
+  suitcase: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "7",
+    width: "18",
+    height: "13",
+    rx: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18M10.5 12.5v1.5h3v-1.5"
+  })),
   choco: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
     x: "6",
     y: "3",
@@ -7433,6 +7502,163 @@ function TriviaRow({
       flexShrink: 0
     }
   }, count));
+}
+// ── TĚLO: interaktivní graf váhy, 7denního průměru a pasu ─────────────────────
+function BodyChart({
+  body
+}) {
+  const [act, setAct] = useState(null);
+  const [on, setOn] = useState({
+    w: true,
+    avg: true,
+    waist: true
+  });
+  const ms = (body || []).filter(m => m && isDayKey(String(m.date || '')) && (parseFloat(m.weight) > 0 || parseFloat(m.waist) > 0)).sort((a, b) => a.date.localeCompare(b.date));
+  if (ms.length < 2) return null;
+  const avgMap = {};
+  bodySeries(body).forEach(p => {
+    avgMap[p.x] = p.avg;
+  });
+  const W = m => parseFloat(m.weight) > 0 ? parseFloat(m.weight) : null;
+  const P = m => parseFloat(m.waist) > 0 ? parseFloat(m.waist) : null;
+  const defs = [{
+    key: 'w',
+    label: 'Váha',
+    kind: 'line',
+    color: C.bl,
+    scaleKey: 'kg',
+    val: W,
+    fmt: v => nf1(v) + ' kg'
+  }, {
+    key: 'avg',
+    label: 'Průměr 7 dní',
+    kind: 'line',
+    color: C.tx3,
+    scaleKey: 'kg',
+    dash: '5 4',
+    val: m => W(m) != null ? avgMap[m.date] ?? null : null,
+    fmt: v => nf1(v) + ' kg'
+  }, {
+    key: 'waist',
+    label: 'Pas',
+    kind: 'line',
+    color: C.wa,
+    val: P,
+    fmt: v => nf1(v) + ' cm'
+  }];
+  let shown = defs.filter(d => on[d.key]);
+  if (!shown.length) shown = [defs[0]];
+  const ai = act == null || act >= ms.length ? ms.length - 1 : act;
+  const cur = ms[ai];
+  const prevOf = fn => {
+    for (let i = ai - 1; i >= 0; i--) {
+      const v = fn(ms[i]);
+      if (v != null) return v;
+    }
+    return null;
+  };
+  const firstOf = fn => {
+    for (let i = 0; i < ms.length; i++) {
+      const v = fn(ms[i]);
+      if (v != null) return v;
+    }
+    return null;
+  };
+  const delta = (v, base, unit, goodDown) => {
+    if (v == null || base == null) return null;
+    const d = Math.round((v - base) * 10) / 10;
+    return /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: d === 0 ? C.tx3 : d < 0 === goodDown ? C.ok : C.er
+      }
+    }, d > 0 ? '+' : '', nf1(d), " ", unit);
+  };
+  const wd = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+  const cw = W(cur),
+    cp = P(cur);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(SeriesToggles, {
+    defs: defs,
+    on: on,
+    setOn: setOn
+  }), /*#__PURE__*/React.createElement(ComboChart, {
+    dates: ms.map(m => m.date),
+    active: ai,
+    onActive: setAct,
+    height: 150,
+    label: 'Tělo — ' + shown.map(d => d.label).join(', '),
+    series: shown.map(d => ({
+      key: d.key,
+      kind: d.kind,
+      color: d.color,
+      dash: d.dash,
+      scaleKey: d.scaleKey,
+      values: ms.map(d.val)
+    }))
+  }), /*#__PURE__*/React.createElement("div", {
+    "aria-live": "polite",
+    style: {
+      background: C.sf2,
+      borderRadius: 12,
+      padding: '10px 12px',
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, wd[parseD(cur.date).getDay()], " ", fmtD(cur.date), ai === ms.length - 1 ? ' · poslední měření' : ''), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'auto 1fr',
+      columnGap: 12,
+      rowGap: 3,
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "Váha"), /*#__PURE__*/React.createElement("span", null, cw != null ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, nf1(cw), " kg"), prevOf(W) != null && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, " · minule ", delta(cw, prevOf(W), 'kg', true))) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "—")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "Pas"), /*#__PURE__*/React.createElement("span", null, cp != null ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("b", null, nf1(cp), " cm"), prevOf(P) != null && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, " · minule ", delta(cp, prevOf(P), 'cm', true))) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "—")), cw != null && avgMap[cur.date] != null && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "Průměr 7 dní"), /*#__PURE__*/React.createElement("span", null, nf1(avgMap[cur.date]), " kg")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.tx3
+    }
+  }, "Od startu"), /*#__PURE__*/React.createElement("span", null, delta(cw, firstOf(W), 'kg', true) || '—', cp != null && firstOf(P) != null ? /*#__PURE__*/React.createElement(React.Fragment, null, " · ", delta(cp, firstOf(P), 'cm', true)) : null))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3,
+      fontSize: 12,
+      marginTop: 6
+    }
+  }, "Klepni nebo táhni po grafu. Váha a průměr sdílí měřítko, pas má vlastní."));
 }
 function LiftTrivia({
   totalKg
@@ -7732,7 +7958,8 @@ function ComboChart({
     lines = series.filter(x => x.kind === 'line');
   const bw = Math.max(2, Math.min(22, step * 0.72 / Math.max(1, bars.length)));
   const scaleOf = sr => {
-    const vals = sr.values.filter(v => v != null && isFinite(v));
+    const grp = sr.scaleKey ? series.filter(x => x.scaleKey === sr.scaleKey) : [sr]; // řady se stejným scaleKey sdílí měřítko
+    const vals = grp.flatMap(x => x.values).filter(v => v != null && isFinite(v));
     if (!vals.length) return () => H - pb;
     if (sr.kind === 'bar') {
       const mx = Math.max(1e-9, ...vals, sr.goal || 0) * 1.08;
@@ -8576,8 +8803,10 @@ function foodByDay(foodLog, from, to) {
 function FoodAnalytics({
   foodLog,
   body,
-  today
+  today,
+  skipDays
 }) {
+  const skipSet = new Set(skipDays || []);
   const [range, setRange] = useState('4w');
   const [on, setOn] = useState({
     p: true,
@@ -8710,7 +8939,7 @@ function FoodAnalytics({
       fontSize: 12,
       marginBottom: 14
     }
-  }, "Průměry z ", done.length, " dokončených dnů se záznamem (bez dneška)."), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "Průměry z ", done.length, " dokončených dnů se záznamem (bez dneška)", days.some(d => skipSet.has(d.date)) ? ' · bez ' + days.filter(d => skipSet.has(d.date)).length + ' dnů služebky' : '', "."), cd(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       ...S.secLabel,
       marginBottom: 8
@@ -8755,10 +8984,10 @@ function FoodAnalytics({
     }
   }, wd[parseD(cur.date).getDay()], " ", fmtD(cur.date), cur.date === today ? ' · dnes' : ''), /*#__PURE__*/React.createElement("span", {
     style: {
-      color: C.tx2,
+      color: skipSet.has(cur.date) ? C.ac : C.tx2,
       fontSize: 14
     }
-  }, cur.n ? cur.n + (cur.n === 1 ? ' jídlo' : cur.n <= 4 ? ' jídla' : ' jídel') : 'bez záznamu')), cur.n > 0 && /*#__PURE__*/React.createElement("div", {
+  }, skipSet.has(cur.date) ? 'služebka — nepočítá se' : cur.n ? cur.n + (cur.n === 1 ? ' jídlo' : cur.n <= 4 ? ' jídla' : ' jídel') : 'bez záznamu')), cur.n > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexWrap: 'wrap',
@@ -9440,6 +9669,7 @@ function App() {
   const [shoppingList, setShoppingList] = useState(null);
   const [foodLog, setFoodLog] = useState([]);
   const [body, setBody] = useState([]);
+  const [foodSkip, setFoodSkip] = useState([]);
   const [exTypes, setExTypes] = useState({});
   const [migOpen, setMigOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -9471,6 +9701,7 @@ function App() {
     'a12:shopList': v => setShoppingList(v || null),
     'deburter:foodlog': v => setFoodLog(v || []),
     'a12:body': v => setBody(v || []),
+    'deburter:foodSkip': v => setFoodSkip(Array.isArray(v) ? v : []),
     'a12:exTypes': v => {
       exTypeOverrides = v && typeof v === 'object' ? v : {};
       setExTypes(exTypeOverrides);
@@ -9814,7 +10045,8 @@ function App() {
     'a12:shopList': shoppingList,
     'deburter:foodlog': foodLog,
     'a12:body': body,
-    'a12:exTypes': exTypes
+    'a12:exTypes': exTypes,
+    'deburter:foodSkip': foodSkip
   };
   const setExType = (name, t) => {
     const next = {
@@ -9826,6 +10058,13 @@ function App() {
     sSave('a12:exTypes', next);
   };
   const legacyCount = Object.entries(trainings).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k)).reduce((n, [, t]) => n + (t.exercises || []).filter(isLegacyEx).length, 0);
+  const toggleSkip = date => {
+    // služebka: den se jen označí, záznamy jídel zůstávají
+    const has = foodSkip.includes(date);
+    const next = has ? foodSkip.filter(d => d !== date) : [...foodSkip, date].sort();
+    setFoodSkip(next);
+    sSave('deburter:foodSkip', next);
+  };
   const replaceFood = async (find, repl) => {
     await flushAll();
     const {
@@ -9911,7 +10150,8 @@ function App() {
         foodLog: foodLog,
         body: body,
         variant: variant,
-        onSaveBody: saveBody
+        onSaveBody: saveBody,
+        foodSkip: foodSkip
       });
       break;
     case 'ukoly':
@@ -9935,7 +10175,7 @@ function App() {
         onSetExType: setExType,
         legacyCount: legacyCount,
         onOpenMigration: () => setMigOpen(true),
-        foodLog: foodLog,
+        foodLog: foodLog.filter(e => !(e && foodSkip.includes(e.date))),
         body: body,
         onMerge: mergeExercises,
         onToast: showToast
@@ -9947,7 +10187,9 @@ function App() {
         foodLog: foodLog,
         onSave: saveFL,
         onDeleteEntry: delFood,
-        body: body
+        body: body,
+        foodSkip: foodSkip,
+        onToggleSkip: toggleSkip
       });
       break;
     case 'recepty':
