@@ -99,8 +99,9 @@ const PROTEIN_GOAL = 160;
 // db2  = dvě jednoručky najednou, zapisuje se váha JEDNÉ činky → „2× 20 kg × 10“
 // db1  = jedna jednoručka po stranách, váha jedné činky, opakování celkem za obě strany
 // reps = jen opakování (+ nepovinné nastavení, např. číslo díry v kleci)
-// assist = vlastní váha s pomocí gumy (shyby): opakování + barva gumy u každé série
-const EX_TYPES = [['bar', 'Osa'], ['db2', '2 činky'], ['db1', '1 činka'], ['reps', 'Opak.'], ['assist', 'Guma']];
+// assist = vlastní váha s pomocí gumy (shyby): opakování + barva gumy u každé série,
+//          nebo „Závaží“ (band 'plus') — pak je ve weight přidaná zátěž v kg
+const EX_TYPES = [['bar', 'Osa'], ['db2', '2 činky'], ['db1', '1 činka'], ['reps', 'Opak.'], ['assist', 'Guma/závaží']];
 const noKg = t => t === 'reps' || t === 'assist';
 const BANDS = [{
   k: 'none',
@@ -144,12 +145,25 @@ const BANDS = [{
   color: '#22c55e',
   lo: 32,
   hi: 54
+}, {
+  k: 'plus',
+  label: 'Závaží',
+  short: 'závaží',
+  color: 'transparent',
+  lo: 0,
+  hi: 0,
+  plus: true
 }];
 const bandOf = k => BANDS.find(b => b.k === k) || null; // '' = nezadáno
 const bandMid = k => {
   const b = bandOf(k);
-  return b ? (b.lo + b.hi) / 2 : null;
+  return b && !b.plus ? (b.lo + b.hi) / 2 : null;
 }; // pomoc gumy v kg (střed rozsahu)
+const numKg = v => parseFloat(String(v ?? '').replace(',', '.')) || 0;
+// Zátěž série oproti vlastní váze: guma = −pomoc, závaží = +kg, bez gumy = 0, nezadáno = null
+const loadOf = (band, weight) => band === 'plus' ? numKg(weight) : bandOf(band) ? -bandMid(band) : null;
+const loadTxt = (band, weight) => band === 'plus' ? '+' + String(numKg(weight)).replace('.', ',') + ' kg' : bandOf(band) ? bandOf(band).short : '';
+const netFmt = v => v == null ? '—' : v > 0 ? '+' + nf1(v) + ' kg závaží' : v < 0 ? '~' + nf1(-v) + ' kg guma' : 'vlastní váha';
 const bandKey = v => {
   const c = String(v ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
   if (!c) return '';
@@ -159,6 +173,7 @@ const bandKey = v => {
   if (/^(fial|purple|violet)/.test(c)) return 'purple';
   if (/^(zelen|green)/.test(c)) return 'green';
   if (/^(bez|none|zadna|nic)/.test(c)) return 'none';
+  if (/^(zavaz|plus|weight|vest|kg)/.test(c)) return 'plus';
   return '';
 };
 const exNorm = s => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -192,8 +207,8 @@ const setTxtT = (s, t) => {
   const w = parseFloat(s.weight) || 0,
     r = parseInt(s.reps) || 0;
   if (t === 'assist') {
-    const b = bandOf(s.band);
-    return r + ' op.' + (b ? ' · ' + b.short : '');
+    const l = loadTxt(s.band, s.weight);
+    return r + ' op.' + (l ? ' · ' + l : '');
   }
   return t === 'reps' || !(w > 0) ? r + ' op.' : kgTxt(w, t) + '×' + r;
 };
@@ -309,7 +324,8 @@ function buildSessions(trainings, body) {
       const sets = (ex.sets || []).map(x => ({
         w: noKg(t) ? 0 : parseFloat(x.weight) || 0,
         r: parseInt(x.reps) || 0,
-        band: x.band || ''
+        band: x.band || '',
+        add: t === 'assist' && x.band === 'plus' ? numKg(x.weight) : 0
       })).filter(x => x.w > 0 || x.r > 0);
       if (!sets.length) return;
       const k = exNorm(name);
@@ -365,32 +381,48 @@ function buildSessions(trainings, body) {
   });
   return by;
 }
-// Shyby s gumou: pomoc = nejslabší guma v tréninku; síla = odhad 1RM z (tělesná hmotnost − pomoc gumy)
+// Shyby s gumou / se závažím: zátěž = nejtěžší série tréninku (guma −, závaží +);
+// síla = odhad 1RM z (tělesná hmotnost − pomoc gumy + závaží)
 function assistInfo(sets, body, date) {
-  const known = sets.filter(x => x.r > 0 && bandOf(x.band));
-  const bands = [...new Set(known.map(x => x.band))];
-  const assist = known.length ? Math.min(...known.map(x => bandMid(x.band))) : null;
+  const L = x => x.band === 'plus' ? x.add : bandOf(x.band) ? -bandMid(x.band) : null;
+  const known = sets.filter(x => x.r > 0 && L(x) != null);
+  const loads = [];
+  known.forEach(x => {
+    const t = loadTxt(x.band, x.add);
+    if (!loads.includes(t)) loads.push(t);
+  });
+  const net = known.length ? Math.max(...known.map(L)) : null;
+  const assist = net == null ? null : Math.max(0, -net);
   const bw = body && bodyWeightAt(body, date) || 80;
   let eff = 0,
     best = null;
   sets.forEach(x => {
-    const m = bandMid(x.band);
-    const e = e1rm(Math.max(1, bw - (m || 0)), x.r);
+    const e = e1rm(Math.max(1, bw + (L(x) || 0)), x.r);
     if (e > eff) {
       eff = e;
       best = x;
     }
   });
-  const top = sets.reduce((b, x) => x.r > b.r ? x : b, {
+  const top = sets.reduce((b, x) => x.r > b.r || x.r === b.r && (L(x) ?? -999) > (L(b) ?? -999) ? x : b, {
     r: 0,
-    band: ''
+    band: '',
+    add: 0
   });
+  const hard = known.reduce((b, x) => !b || L(x) > L(b) || L(x) === L(b) && x.r > b.r ? x : b, null);
+  const sTxt = x => x ? (loadTxt(x.band, x.add) || 'bez zadání') + ' × ' + x.r : '';
   return {
     assist,
-    bands,
+    net,
+    loads,
+    hardTxt: sTxt(hard),
+    effTxt: sTxt(best),
+    bands: [...new Set(known.map(x => x.band))],
     eff,
     effSet: best,
-    topBand: top.band
+    topBand: top.band,
+    topLoad: loadTxt(top.band, top.add),
+    topNet: L(top),
+    bw
   };
 }
 const strengthOf = o => o.type === 'reps' ? x => x.topReps : o.type === 'assist' ? x => x.eff : x => x.e1rm;
@@ -707,9 +739,13 @@ function weeklyMarkdown(data, todayStr) {
     rows.forEach(o => {
       const a = o.sessions[0],
         z = o.sessions[o.sessions.length - 1];
+      if (o.type === 'assist') {
+        const p = a.eff > 0 ? Math.round((z.eff / a.eff - 1) * 100) : 0;
+        L.push('| ' + o.name + ' | ' + z.topReps + ' op.' + (z.topLoad ? ' · ' + z.topLoad : '') + ' | ~' + nf1(z.eff) + ' kg (tělo ' + nf1(z.bw) + ' kg) | ' + (p >= 0 ? '+' : '') + p + ' % |');
+        return;
+      }
       if (noKg(o.type)) {
-        const bb = o.type === 'assist' && bandOf(z.topBand);
-        L.push('| ' + o.name + ' | ' + z.topReps + ' op.' + (bb ? ' · ' + bb.short : '') + ' | — | ' + (z.topReps - a.topReps >= 0 ? '+' : '') + (z.topReps - a.topReps) + ' op. |');
+        L.push('| ' + o.name + ' | ' + z.topReps + ' op. | — | ' + (z.topReps - a.topReps >= 0 ? '+' : '') + (z.topReps - a.topReps) + ' op. |');
         return;
       }
       const pct = a.e1rm > 0 ? Math.round((z.e1rm / a.e1rm - 1) * 100) : 0;
@@ -726,9 +762,10 @@ function setsCSV(trainings) {
     const ex = isLegacyEx(raw) ? migrateExercise(raw) : raw;
     const t = exTypeOf(ex.name);
     (ex.sets || []).forEach((x, i) => {
-      const w = noKg(t) ? 0 : parseFloat(x.weight) || 0,
+      const pl = t === 'assist' && x.band === 'plus',
+        w = pl ? numKg(x.weight) : noKg(t) ? 0 : parseFloat(x.weight) || 0,
         r = parseInt(x.reps) || 0;
-      L.push([d, weekOf(d), '"' + String(ex.name || '').replace(/"/g, '""') + '"', t, i + 1, w ? c(w) : '', r || '', w && r ? c(r1(e1rm(w, r))) : '', x.level || ex.level || '', (bandOf(x.band) || {}).label || ''].join(';'));
+      L.push([d, weekOf(d), '"' + String(ex.name || '').replace(/"/g, '""') + '"', t, i + 1, w ? c(w) : '', r || '', w && r && !pl ? c(r1(e1rm(w, r))) : '', x.level || ex.level || '', (bandOf(x.band) || {}).label || ''].join(';'));
     });
   }));
   return '﻿' + L.join('\r\n');
@@ -850,6 +887,7 @@ const C = DARK ? {
   er: '#ff453a',
   wa: '#ff9f0a',
   bl: '#0a84ff',
+  pu: '#bf5af2',
   sep: 'rgba(84,84,88,0.65)',
   hair: 'rgba(84,84,88,0.45)',
   bar: 'rgba(28,28,30,0.9)',
@@ -870,6 +908,7 @@ const C = DARK ? {
   er: '#d70015',
   wa: '#c93400',
   bl: '#007aff',
+  pu: '#8944ab',
   sep: 'rgba(60,60,67,0.29)',
   hair: 'rgba(60,60,67,0.22)',
   bar: 'rgba(249,249,249,0.92)',
@@ -3258,10 +3297,68 @@ function BandSelect({
   value,
   onChange,
   check,
-  label
+  label,
+  compact
 }) {
   const b = bandOf(value);
   const ring = !b || b.k === 'none' || b.k === 'black';
+  const sel = /*#__PURE__*/React.createElement("select", {
+    value: value || '',
+    onChange: e => onChange(e.target.value),
+    "aria-label": label,
+    style: {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%',
+      opacity: 0,
+      cursor: 'pointer',
+      fontSize: 16,
+      border: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "— vyber gumu / závaží —"), BANDS.map(x => /*#__PURE__*/React.createElement("option", {
+    key: x.k,
+    value: x.k
+  }, x.plus ? 'Závaží (+ kg)' : x.label + (x.hi ? ' (' + x.lo + '–' + x.hi + ' kg)' : ''))));
+  if (b && b.plus) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+      background: C.ok + '26',
+      color: C.ok,
+      borderRadius: 10,
+      minHeight: 44,
+      padding: compact ? '0 6px' : '0 10px',
+      flexShrink: 0,
+      ...(check ? {
+        boxShadow: 'inset 0 0 0 1.5px ' + C.ac
+      } : {})
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      lineHeight: 1
+    }
+  }, "+"), !compact && /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      flex: 1,
+      fontSize: 16
+    }
+  }, "Závaží"), /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      fontSize: 9,
+      opacity: 0.8
+    }
+  }, "▼"), sel);
   // Viditelný je jen název gumy; přes něj leží průhledný nativní výběr (na iOS kolečko s rozsahy odporu)
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3305,26 +3402,7 @@ function BandSelect({
       fontSize: 11,
       flexShrink: 0
     }
-  }, "▼"), /*#__PURE__*/React.createElement("select", {
-    value: value || '',
-    onChange: e => onChange(e.target.value),
-    "aria-label": label,
-    style: {
-      position: 'absolute',
-      inset: 0,
-      width: '100%',
-      height: '100%',
-      opacity: 0,
-      cursor: 'pointer',
-      fontSize: 16,
-      border: 'none'
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "— vyber gumu —"), BANDS.map(x => /*#__PURE__*/React.createElement("option", {
-    key: x.k,
-    value: x.k
-  }, x.label, x.hi ? ' (' + x.lo + '–' + x.hi + ' kg)' : ''))));
+  }, "▼"), sel);
 }
 function ExCard({
   ex,
@@ -3346,7 +3424,8 @@ function ExCard({
     return r > b.r ? {
       w: 0,
       r,
-      band: s.band || ''
+      band: s.band || '',
+      add: s.weight
     } : b;
   }, {
     w: 0,
@@ -3371,7 +3450,18 @@ function ExCard({
     if (nCheck > 0) setOpen(true);
   }, [nCheck > 0]);
   const prevSets = prev ? prev.sets.filter(s => (parseFloat(s.weight) || 0) > 0 || (parseInt(s.reps) || 0) > 0) : [];
-  const prevBest = prevSets.reduce((b, s) => {
+  const prevBest = type === 'assist' ? prevSets.reduce((b, s) => {
+    const r = parseInt(s.reps) || 0;
+    return r > b.r ? {
+      w: 0,
+      r,
+      l: loadTxt(s.band, s.weight)
+    } : b;
+  }, {
+    w: 0,
+    r: 0,
+    l: ''
+  }) : prevSets.reduce((b, s) => {
     const w = parseFloat(s.weight) || 0,
       r = parseInt(s.reps) || 0;
     return w > b.w || w === b.w && r > b.r ? {
@@ -3444,7 +3534,7 @@ function ExCard({
       color: C.tx2,
       fontSize: 13
     }
-  }, best.r, " op.", type === 'reps' && ex.level ? ' · díra ' + ex.level : '', type === 'assist' && bandOf(best.band) ? ' · ' + bandOf(best.band).short : ''), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
+  }, best.r, " op.", type === 'reps' && ex.level ? ' · díra ' + ex.level : '', type === 'assist' && loadTxt(best.band, best.add) ? ' · ' + loadTxt(best.band, best.add) : ''), nCheck > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       background: C.ac1,
       color: C.ac,
@@ -3463,7 +3553,7 @@ function ExCard({
     style: {
       color: C.tx2
     }
-  }, prevBest.w > 0 && !noKg(type) ? `${kgTxt(prevBest.w, type)} kg × ${prevBest.r}` : `${prevBest.r} op.`), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
+  }, prevBest.w > 0 && !noKg(type) ? `${kgTxt(prevBest.w, type)} kg × ${prevBest.r}` : `${prevBest.r} op.` + (prevBest.l ? ' · ' + prevBest.l : '')), " · ", prevSets.length, " sérií"))), /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.tx3,
       fontSize: 13,
@@ -3593,7 +3683,7 @@ function ExCard({
       gap: 6,
       marginBottom: 6
     }
-  }, (type === 'reps' ? ['#', 'OPAKOVÁNÍ', ''] : type === 'assist' ? ['#', 'GUMA', 'OPAKOVÁNÍ', ''] : ['#', type === 'db2' ? 'KG · 1 ČINKA (2×)' : type === 'db1' ? 'KG · ČINKA' : 'KG', type === 'db1' ? 'REPS · OBĚ STRANY' : 'REPS', '']).map((h, i) => /*#__PURE__*/React.createElement("div", {
+  }, (type === 'reps' ? ['#', 'OPAKOVÁNÍ', ''] : type === 'assist' ? ['#', 'GUMA / ZÁVAŽÍ', 'OPAKOVÁNÍ', ''] : ['#', type === 'db2' ? 'KG · 1 ČINKA (2×)' : type === 'db1' ? 'KG · ČINKA' : 'KG', type === 'db1' ? 'REPS · OBĚ STRANY' : 'REPS', '']).map((h, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       color: C.tx3,
@@ -3620,12 +3710,69 @@ function ExCard({
       fontWeight: 700,
       fontFamily: F
     }
-  }, i + 1), type === 'assist' && /*#__PURE__*/React.createElement(BandSelect, {
+  }, i + 1), type === 'assist' && (s.band === 'plus' ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement(BandSelect, {
+    compact: true,
     value: s.band,
-    onChange: v => onUpdateSet(i, 'band', v),
+    onChange: v => onUpdateSet(i, {
+      band: v,
+      weight: ''
+    }),
     check: s.check,
-    label: 'Guma, série ' + (i + 1)
-  }), !noKg(type) && /*#__PURE__*/React.createElement("div", {
+    label: 'Guma nebo závaží, série ' + (i + 1)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      alignItems: 'center',
+      background: C.sf2,
+      borderRadius: 10,
+      ...(s.check ? {
+        boxShadow: 'inset 0 0 0 1.5px ' + C.ac
+      } : {})
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: decDisp(s.weight),
+    onChange: e => onUpdateSet(i, 'weight', decClean(e.target.value)),
+    placeholder: "0",
+    type: "text",
+    inputMode: "decimal",
+    autoComplete: "off",
+    "aria-label": 'Závaží v kg, série ' + (i + 1),
+    style: {
+      ...inpS,
+      background: 'transparent',
+      padding: '10px 0 10px 8px',
+      textAlign: 'right',
+      minWidth: 0,
+      flex: 1,
+      borderRadius: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      color: C.tx3,
+      fontSize: 14,
+      padding: '0 8px 0 3px'
+    }
+  }, "kg"))) : /*#__PURE__*/React.createElement(BandSelect, {
+    value: s.band,
+    onChange: v => onUpdateSet(i, v === 'plus' ? {
+      band: v
+    } : {
+      band: v,
+      weight: ''
+    }),
+    check: s.check,
+    label: 'Guma nebo závaží, série ' + (i + 1)
+  })), !noKg(type) && /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'relative'
     }
@@ -5049,7 +5196,7 @@ function DenikTab({
     const src = lastCur || p && (p.sets[0] || null);
     const nk = noKg(exTypeOf(e.name));
     const ns = src ? {
-      weight: nk ? '' : String(src.weight ?? ''),
+      weight: nk && src.band !== 'plus' ? '' : String(src.weight ?? ''),
       reps: String(src.reps ?? ''),
       ...(src.band ? {
         band: src.band
@@ -5074,7 +5221,9 @@ function DenikTab({
       } = s;
       return {
         ...rest,
-        [f]: v
+        ...(typeof f === 'object' ? f : {
+          [f]: v
+        })
       };
     })
   } : e));
@@ -5100,10 +5249,10 @@ function DenikTab({
         check: x[2] === '?' || x[2] === true,
         band: typeof x[0] === 'string' ? bandKey(x[0]) : ''
       } : {
-        weight: String(x.weight ?? x.w ?? ''),
+        weight: String(x.weight ?? x.w ?? x.zavazi ?? x['závaží'] ?? ''),
         reps: String(x.reps ?? x.r ?? ''),
         check: !!(x.check || x.uncertain),
-        band: bandKey(x.band ?? x.guma ?? '')
+        band: bandKey(x.band ?? x.guma ?? (x.zavazi != null || x['závaží'] != null ? 'plus' : ''))
       });
       const name = known[norm(raw)] || raw;
       let level = e.level != null && e.level !== '' ? String(e.level) : '';
@@ -5119,10 +5268,20 @@ function DenikTab({
           ...r,
           weight: ''
         };
-      });else if (exTypeOf(name) === 'assist') sets2 = sets.map(x => ({
-        ...x,
-        weight: ''
-      }));else sets2 = sets.map(({
+      });
+      // Shyby: číslo = závaží v kg („+10“, „10 kg“, „závaží 10“ taky), text = guma
+      else if (exTypeOf(name) === 'assist') sets2 = sets.map(x => {
+        const m = /^\s*(?:\+|záva\S*\s*|zava\S*\s*)?(\d+(?:[.,]\d+)?)\s*(?:kg)?\s*$/i.exec(x.weight);
+        if (x.band === 'plus' || !x.band && m && numKg(m[1]) > 0) return {
+          ...x,
+          band: 'plus',
+          weight: m ? String(numKg(m[1])) : String(numKg(x.weight) || '')
+        };
+        return {
+          ...x,
+          weight: ''
+        };
+      });else sets2 = sets.map(({
         band,
         ...r
       }) => r);
@@ -7980,6 +8139,10 @@ function ComboChart({
     }
     let lo = Math.min(...vals),
       hi = Math.max(...vals);
+    if (sr.zeroLine) {
+      lo = Math.min(lo, 0);
+      hi = Math.max(hi, 0);
+    } // čára „vlastní váha“ (0) je vždy vidět
     if (hi - lo < 1e-9) {
       lo -= 1;
       hi += 1;
@@ -8058,6 +8221,28 @@ function ComboChart({
       fontSize: "10",
       fontWeight: "600"
     }, sr.goalLabel || sr.goal)));
+  }), lines.filter(sr => sr.zeroLine).map(sr => {
+    const Y = scaleOf(sr);
+    const vs = sr.values.filter(v => v != null && isFinite(v));
+    if (!vs.length) return null;
+    const y = Y(0);
+    return y >= pt - 2 && y <= H - pb + 2 ? /*#__PURE__*/React.createElement("g", {
+      key: 'z' + sr.key
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: pl,
+      x2: W - pr,
+      y1: y,
+      y2: y,
+      stroke: sr.color,
+      strokeOpacity: "0.5",
+      strokeDasharray: "2 3"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: pl + 2,
+      y: y - 4,
+      fill: sr.color,
+      fontSize: "10",
+      fontWeight: "600"
+    }, sr.zeroLine)) : null;
   }), lines.map(sr => {
     const Y = scaleOf(sr);
     const pts = sr.values.map((v, i) => v != null && isFinite(v) && (v > 0 || sr.zeroOk) ? [cx(i), Y(v), i] : null).filter(Boolean);
@@ -8173,7 +8358,8 @@ function ProgressView({
     vol: true,
     top: true,
     tot: false,
-    asst: true
+    asst: true,
+    eff: true
   });
   const [act, setAct] = useState(null);
   const [showAll, setShowAll] = useState(false);
@@ -8215,7 +8401,39 @@ function ProgressView({
   if (o) {
     const isReps = noKg(o.type),
       isAssist = o.type === 'assist';
-    const defs = isReps ? [{
+    // Shyby: hlavní číslo = odhad síly (srovnatelný s gumou i se závažím); opakování samotná po přidání závaží klesnou
+    const defs = isAssist ? [{
+      key: 'eff',
+      label: 'Síla (odhad)',
+      kind: 'line',
+      color: C.ac,
+      val: x => x.eff,
+      fmt: v => '~' + nf1(v) + ' kg'
+    }, {
+      key: 'asst',
+      label: 'Guma / závaží',
+      kind: 'line',
+      color: C.pu,
+      dash: '5 4',
+      zeroOk: true,
+      zeroLine: 'vlastní váha',
+      val: x => x.net,
+      fmt: netFmt
+    }, {
+      key: 'top',
+      label: 'Max. opakování',
+      kind: 'line',
+      color: C.bl,
+      val: x => x.topReps,
+      fmt: v => Math.round(v) + ' op.'
+    }, {
+      key: 'tot',
+      label: 'Celkem opakování',
+      kind: 'bar',
+      color: C.tx3,
+      val: x => x.totReps,
+      fmt: v => Math.round(v) + ' op.'
+    }] : isReps ? [{
       key: 'top',
       label: 'Max. opakování',
       kind: 'line',
@@ -8229,16 +8447,7 @@ function ProgressView({
       color: C.tx3,
       val: x => x.totReps,
       fmt: v => Math.round(v) + ' op.'
-    }, ...(isAssist ? [{
-      key: 'asst',
-      label: 'Pomoc gumy',
-      kind: 'line',
-      color: C.wa,
-      dash: '5 4',
-      zeroOk: true,
-      val: x => x.assist,
-      fmt: v => v == null ? '—' : v > 0 ? '~' + nf1(v) + ' kg' : 'bez gumy'
-    }] : [])] : [{
+    }] : [{
       key: 'e1rm',
       label: '1RM',
       kind: 'line',
@@ -8324,7 +8533,7 @@ function ProgressView({
         fontSize: 13,
         color: C.tx3
       }
-    }, isReps ? 'max. opakování' + (isAssist && bandOf(lastS.topBand) ? ' · ' + bandOf(lastS.topBand).short : '') : 'odhad 1RM'), pct !== null && /*#__PURE__*/React.createElement("span", {
+    }, isAssist ? 'odhad síly' + (lastS.effTxt ? ' · z ' + lastS.effTxt : '') : isReps ? 'max. opakování' : 'odhad 1RM'), pct !== null && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 15,
         fontWeight: 600,
@@ -8352,6 +8561,7 @@ function ProgressView({
         color: d.color,
         dash: d.dash,
         zeroOk: d.zeroOk,
+        zeroLine: d.zeroLine,
         values: ss.map(d.val)
       }))
     }), cur && /*#__PURE__*/React.createElement("div", {
@@ -8384,12 +8594,12 @@ function ProgressView({
         color: C.tx2,
         fontSize: 14
       }
-    }, "díra ", cur.level), isAssist && cur.bands && cur.bands.length > 0 && /*#__PURE__*/React.createElement("span", {
+    }, "díra ", cur.level), isAssist && cur.loads && cur.loads.length > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
-        color: C.tx2,
+        color: cur.net > 0 ? C.ok : C.tx2,
         fontSize: 14
       }
-    }, cur.bands.map(k => bandOf(k).short).join(', '))), /*#__PURE__*/React.createElement("div", {
+    }, cur.loads.join(', '))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
         flexWrap: 'wrap',
@@ -8491,10 +8701,10 @@ function ProgressView({
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'grid',
-        gridTemplateColumns: isReps ? '1fr 1fr 1fr' : '56px 1fr 64px 64px',
+        gridTemplateColumns: isAssist ? 'auto 1fr 1fr auto' : isReps ? '1fr 1fr 1fr' : '56px 1fr 64px 64px',
         gap: 6
       }
-    }, (isReps ? ['DATUM', 'MAX OP.', 'CELKEM'] : ['DATUM', 'NEJLEPŠÍ', '1RM', 'OBJEM']).map((h, i) => /*#__PURE__*/React.createElement("div", {
+    }, (isAssist ? ['DATUM', 'MAX OP.', 'NEJTĚŽŠÍ', 'SÍLA'] : isReps ? ['DATUM', 'MAX OP.', 'CELKEM'] : ['DATUM', 'NEJLEPŠÍ', '1RM', 'OBJEM']).map((h, i) => /*#__PURE__*/React.createElement("div", {
       key: h,
       style: {
         color: C.tx3,
@@ -8502,7 +8712,42 @@ function ProgressView({
         fontWeight: 600,
         textAlign: i ? 'right' : 'left'
       }
-    }, h)), [...o.sessions].reverse().map((x, i) => isReps ? [/*#__PURE__*/React.createElement("div", {
+    }, h)), [...o.sessions].reverse().map((x, i) => isAssist ? [/*#__PURE__*/React.createElement("div", {
+      key: i + 'd',
+      style: {
+        fontSize: 14,
+        color: C.tx2,
+        whiteSpace: 'nowrap'
+      }
+    }, fmtD(x.date)), /*#__PURE__*/React.createElement("div", {
+      key: i + 'a',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        whiteSpace: 'nowrap'
+      }
+    }, x.topReps, x.topLoad ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.tx3
+      }
+    }, " · ", x.topLoad) : ''), /*#__PURE__*/React.createElement("div", {
+      key: i + 'h',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        whiteSpace: 'nowrap',
+        color: x.net > 0 ? C.ok : C.tx2,
+        fontWeight: x.net > 0 ? 600 : 400
+      }
+    }, x.hardTxt || '—'), /*#__PURE__*/React.createElement("div", {
+      key: i + 'b',
+      style: {
+        fontSize: 14,
+        textAlign: 'right',
+        color: i === 0 ? C.ac : C.tx,
+        fontWeight: i === 0 ? 700 : 400
+      }
+    }, nf1(x.eff))] : isReps ? [/*#__PURE__*/React.createElement("div", {
       key: i + 'd',
       style: {
         fontSize: 14,
@@ -8518,11 +8763,12 @@ function ProgressView({
       style: {
         color: C.tx3
       }
-    }, " · d", x.level) : '', isAssist && bandOf(x.topBand) ? /*#__PURE__*/React.createElement("span", {
+    }, " · d", x.level) : '', isAssist && x.topLoad ? /*#__PURE__*/React.createElement("span", {
       style: {
-        color: C.tx3
+        color: x.topNet > 0 ? C.ok : C.tx3,
+        fontWeight: x.topNet > 0 ? 600 : 400
       }
-    }, " · ", bandOf(x.topBand).short) : ''), /*#__PURE__*/React.createElement("div", {
+    }, " · ", x.topLoad) : ''), /*#__PURE__*/React.createElement("div", {
       key: i + 'b',
       style: {
         fontSize: 14,
@@ -8564,7 +8810,7 @@ function ProgressView({
         marginTop: 10,
         lineHeight: 1.4
       }
-    }, "Pokrok = víc opakování nebo slabší guma. „Pomoc gumy“ je střed odporu gumy (např. černá 14–27 kg → ~20,5 kg) — čím níž, tím líp."), !isReps && /*#__PURE__*/React.createElement("div", {
+    }, "Pokrok = víc opakování, slabší guma nebo těžší závaží. „Guma / závaží“: pod čarou vlastní váhy = pomoc gumy (střed odporu, např. černá 14–27 kg → ~20,5 kg), nad čarou = přidané závaží. „Síla (odhad)“ = 1RM (Epley) z tělesné hmotnosti − guma + závaží v nejlepší sérii, takže jde porovnat trénink s gumou i se závažím. Hmotnost se bere z posledního vážení před tréninkem."), !isReps && /*#__PURE__*/React.createElement("div", {
       style: {
         color: C.tx3,
         fontSize: 12,
