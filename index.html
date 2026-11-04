@@ -2025,7 +2025,19 @@ const SB_BASE = 'https://infkvxltifdatugjudwt.supabase.co';
 const SB_URL = SB_BASE + '/rest/v1';
 const SB_KEY = 'sb_publishable_Zf2UBPHLnYe4ep2U2LTsVQ_5u8FxFJy';
 const SESSION_KEY = 'deburter:session';
-const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body', 'a12:exTypes', 'deburter:foodSkip'];
+const DATA_KEYS = ['a12:variant', 'a12:trainings', 'a12:templates', 'a12:mealPlan', 'a12:shopList', 'deburter:foodlog', 'a12:body', 'a12:exTypes', 'deburter:foodSkip', 'deburter:foodFav'];
+// Oblíbená jídla: zapíší se jedním klepnutím s aktuálním časem. Dokud nic neuložíš, je tu ranní shake.
+const DEFAULT_FAVS = [{
+  id: 'fav-shake',
+  name: 'Proteinový shake s banánem, kreatinem a kolagenem',
+  protein: 31,
+  carbs: 27,
+  fat: 2,
+  kcal: 250,
+  status: 'ok',
+  note: ''
+}];
+const favKey = n => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
 const BACKUP_KEEP = 30;
 class AuthError extends Error {}
 let session = null;
@@ -2484,6 +2496,9 @@ const ICONS = {
   x: /*#__PURE__*/React.createElement("path", {
     d: "M6 6l12 12M18 6L6 18"
   }),
+  star: /*#__PURE__*/React.createElement("path", {
+    d: "M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"
+  }),
   pencil: /*#__PURE__*/React.createElement("path", {
     d: "M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3"
   }),
@@ -2499,13 +2514,14 @@ function Ico({
   size = 18,
   label,
   sw = 2,
-  style
+  style,
+  fill
 }) {
   return /*#__PURE__*/React.createElement("svg", {
     width: size,
     height: size,
     viewBox: "0 0 24 24",
-    fill: "none",
+    fill: fill || 'none',
     stroke: "currentColor",
     strokeWidth: sw,
     strokeLinecap: "round",
@@ -5923,8 +5939,11 @@ function JidloTab({
   onDeleteEntry,
   body,
   foodSkip,
-  onToggleSkip
+  onToggleSkip,
+  favs,
+  onSaveFavs
 }) {
+  favs = Array.isArray(favs) ? favs : [];
   const skipSet = new Set(foodSkip || []);
   const statLog = foodLog.filter(e => !(e && skipSet.has(e.date)));
   const [jv, setJv] = useState('log');
@@ -5945,6 +5964,64 @@ function JidloTab({
   });
   const [delConf, setDelConf] = useState(null);
   const [flash, setFlash] = useState('');
+  const [flashUndo, setFlashUndo] = useState(null);
+  const [favEdit, setFavEdit] = useState(false);
+  const flashT = React.useRef(null),
+    lastTap = React.useRef({});
+  const say = (text, undo) => {
+    clearTimeout(flashT.current);
+    setFlash(text);
+    setFlashUndo(undo ? () => undo : null);
+    flashT.current = setTimeout(() => {
+      setFlash('');
+      setFlashUndo(null);
+    }, undo ? 7000 : 3500);
+  };
+  const nowHM = () => new Date().toTimeString().slice(0, 5);
+  // Oblíbené jídlo → nový záznam s aktuálním časem (do vybraného dne)
+  const addFav = f => {
+    const t = Date.now();
+    if (lastTap.current[f.id] && t - lastTap.current[f.id] < 1500) return;
+    lastTap.current[f.id] = t; // dvojklep
+    const id = t + '',
+      time = nowHM();
+    onSave([...foodLog, {
+      id,
+      date: selDate,
+      time,
+      name: f.name,
+      protein: numOf(f.protein),
+      carbs: numOf(f.carbs),
+      fat: numOf(f.fat),
+      kcal: numOf(f.kcal) || Math.round(4 * numOf(f.protein) + 4 * numOf(f.carbs) + 9 * numOf(f.fat)),
+      status: f.status || 'ok',
+      note: f.note || ''
+    }]);
+    say('Přidáno ' + time + (selDate !== today ? ' · ' + fmtD(selDate) : '') + ': ' + f.name, () => onSave(foodLogRef.current.filter(e => e.id !== id)));
+  };
+  const foodLogRef = React.useRef(foodLog);
+  foodLogRef.current = foodLog;
+  const favOf = e => favs.find(f => favKey(f.name) === favKey(e.name));
+  const toggleFav = e => {
+    const f = favOf(e);
+    if (f) {
+      const prev = favs;
+      onSaveFavs(favs.filter(x => x !== f));
+      say('Odebráno z oblíbených: ' + e.name, () => onSaveFavs(prev));
+    } else {
+      onSaveFavs([...favs, {
+        id: 'fav-' + Date.now(),
+        name: e.name,
+        protein: numOf(e.protein),
+        carbs: numOf(e.carbs),
+        fat: numOf(e.fat),
+        kcal: kcalOf(e),
+        status: e.status || 'ok',
+        note: e.note || ''
+      }]);
+      say('Uloženo do oblíbených: ' + e.name);
+    }
+  };
   const dayLog = foodLog.filter(e => e.date === selDate).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
   const dayP = dayLog.reduce((s, e) => s + (parseFloat(e.protein) || 0), 0);
   const dayK = dayLog.reduce((s, e) => s + kcalOf(e), 0);
@@ -5986,8 +6063,7 @@ function JidloTab({
       const fk = numOf(pickKey(data, FOOD_KEYS.kcal)) || Math.round(4 * fp + 4 * fc + 9 * ff);
       const fnRaw = pickKey(data, FOOD_KEYS.note);
       const fn = fnRaw == null ? '' : String(fnRaw);
-      setFlash('Přidáno: ' + data.name + ' · ' + fp + 'g B · ' + fk + ' kcal · ' + fmtD(entryDate));
-      setTimeout(() => setFlash(''), 3500);
+      say('Přidáno: ' + data.name + ' · ' + fp + 'g B · ' + fk + ' kcal · ' + fmtD(entryDate));
       onSave([...foodLog, {
         id: Date.now() + '',
         date: entryDate,
@@ -6089,6 +6165,7 @@ function JidloTab({
     trainings: foodDots,
     startCollapsed: true
   }), flash && /*#__PURE__*/React.createElement("div", {
+    role: "status",
     style: {
       background: C.ok + '26',
       color: C.ok,
@@ -6096,9 +6173,36 @@ function JidloTab({
       padding: '10px 14px',
       marginBottom: 12,
       fontSize: 14,
-      fontWeight: 600
+      fontWeight: 600,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
     }
-  }, "✓ ", flash), selDate !== today && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, "✓ ", flash), flashUndo && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const u = flashUndo;
+      clearTimeout(flashT.current);
+      setFlash('');
+      setFlashUndo(null);
+      u();
+    },
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.ok,
+      fontSize: 15,
+      fontWeight: 700,
+      fontFamily: F,
+      cursor: 'pointer',
+      padding: '4px 6px',
+      flexShrink: 0
+    }
+  }, "Zpět")), selDate !== today && /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.ac1,
       color: C.ac,
@@ -6244,7 +6348,143 @@ function JidloTab({
       fontSize: 13,
       marginTop: 6
     }
-  }, pPct, "% · zbývá ", Math.max(0, Math.round(PROTEIN_GOAL - dayP)), "g")), delConf && /*#__PURE__*/React.createElement(ActionSheet, {
+  }, pPct, "% · zbývá ", Math.max(0, Math.round(PROTEIN_GOAL - dayP)), "g")), !pasting && !adding && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      padding: '0 4px 6px'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...S.secLabel,
+      marginBottom: 0
+    }
+  }, "Oblíbená", selDate !== today ? ' → ' + fmtD(selDate) : ''), favs.length > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setFavEdit(!favEdit),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.ac,
+      fontSize: 15,
+      fontFamily: F,
+      cursor: 'pointer',
+      padding: '4px 0'
+    }
+  }, favEdit ? 'Hotovo' : 'Upravit')), favs.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.tx3,
+      fontSize: 14,
+      padding: '0 4px'
+    }
+  }, "Hvězdičkou u jídla ho uložíš sem a příště ho zapíšeš jedním klepnutím.") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      borderRadius: 16,
+      overflow: 'hidden'
+    }
+  }, favs.map((f, i) => /*#__PURE__*/React.createElement(React.Fragment, {
+    key: f.id || i
+  }, i > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 0.5,
+      background: C.hair,
+      marginLeft: 56
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => !favEdit && addFav(f),
+    disabled: favEdit,
+    "aria-label": 'Zapsat ' + f.name + ' teď',
+    style: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      background: 'none',
+      border: 'none',
+      color: C.tx,
+      padding: '12px 16px',
+      cursor: favEdit ? 'default' : 'pointer',
+      textAlign: 'left',
+      fontFamily: F,
+      minHeight: 56
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      background: favEdit ? C.sf2 : C.ac,
+      color: favEdit ? C.tx3 : '#000',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: 20,
+      fontWeight: 600,
+      flexShrink: 0,
+      lineHeight: 1
+    }
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 16,
+      fontWeight: 500,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }
+  }, f.name), (() => {
+    const done = dayLog.filter(e => favKey(e.name) === favKey(f.name)).map(e => e.time).filter(Boolean);
+    return done.length ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'block',
+        fontSize: 13,
+        color: C.ok,
+        fontWeight: 500
+      }
+    }, "✓ ", selDate === today ? 'dnes' : fmtD(selDate), " už v ", done.join(', ')) : null;
+  })(), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'block',
+      fontSize: 13,
+      color: C.tx3
+    }
+  }, /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: C.ac,
+      fontWeight: 600
+    }
+  }, numOf(f.protein), " g B"), " · ", numOf(f.carbs), " g S · ", numOf(f.fat), " g T · ", numOf(f.kcal) || Math.round(4 * numOf(f.protein) + 4 * numOf(f.carbs) + 9 * numOf(f.fat)), " kcal"))), favEdit && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const prev = favs;
+      onSaveFavs(favs.filter(x => x !== f));
+      say('Odebráno z oblíbených: ' + f.name, () => onSaveFavs(prev));
+    },
+    style: {
+      ...S.ghostIcon,
+      marginRight: 8
+    }
+  }, /*#__PURE__*/React.createElement(Ico, {
+    name: "x",
+    size: 16,
+    label: 'Odebrat ' + f.name + ' z oblíbených'
+  }))))))), delConf && /*#__PURE__*/React.createElement(ActionSheet, {
     title: "Smazat jídlo?",
     message: (foodLog.find(e => e.id === delConf) || {}).name,
     confirmLabel: "Smazat jídlo",
@@ -6364,6 +6604,18 @@ function JidloTab({
       lineHeight: 1.35
     }
   }, e.note)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => toggleFav(e),
+    "aria-pressed": !!favOf(e),
+    style: {
+      ...S.ghostIcon,
+      color: favOf(e) ? C.ac : C.tx3
+    }
+  }, /*#__PURE__*/React.createElement(Ico, {
+    name: "star",
+    size: 17,
+    fill: favOf(e) ? 'currentColor' : 'none',
+    label: favOf(e) ? 'Odebrat z oblíbených' : 'Uložit do oblíbených'
+  })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setDelConf(e.id),
     style: S.ghostIcon
   }, /*#__PURE__*/React.createElement(Ico, {
@@ -10078,6 +10330,7 @@ function App() {
   const [foodLog, setFoodLog] = useState([]);
   const [body, setBody] = useState([]);
   const [foodSkip, setFoodSkip] = useState([]);
+  const [foodFav, setFoodFav] = useState(DEFAULT_FAVS);
   const [exTypes, setExTypes] = useState({});
   const [migOpen, setMigOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -10110,6 +10363,7 @@ function App() {
     'deburter:foodlog': v => setFoodLog(v || []),
     'a12:body': v => setBody(v || []),
     'deburter:foodSkip': v => setFoodSkip(Array.isArray(v) ? v : []),
+    'deburter:foodFav': v => setFoodFav(Array.isArray(v) ? v : DEFAULT_FAVS),
     'a12:exTypes': v => {
       exTypeOverrides = v && typeof v === 'object' ? v : {};
       setExTypes(exTypeOverrides);
@@ -10394,6 +10648,10 @@ function App() {
     setFoodLog(next);
     sSave('deburter:foodlog', next);
   };
+  const saveFav = next => {
+    setFoodFav(next);
+    sSave('deburter:foodFav', next);
+  };
   const saveBody = next => {
     setBody(next);
     sSave('a12:body', next);
@@ -10454,7 +10712,8 @@ function App() {
     'deburter:foodlog': foodLog,
     'a12:body': body,
     'a12:exTypes': exTypes,
-    'deburter:foodSkip': foodSkip
+    'deburter:foodSkip': foodSkip,
+    'deburter:foodFav': foodFav
   };
   const setExType = (name, t) => {
     const next = {
@@ -10607,7 +10866,9 @@ function App() {
         onDeleteEntry: delFood,
         body: body,
         foodSkip: foodSkip,
-        onToggleSkip: toggleSkip
+        onToggleSkip: toggleSkip,
+        favs: foodFav,
+        onSaveFavs: saveFav
       });
       break;
     case 'recepty':
